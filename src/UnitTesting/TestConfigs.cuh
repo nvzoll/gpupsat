@@ -1,0 +1,8 @@
+#ifndef TESTCONFIGS_CUH
+#define TESTCONFIGS_CUH
+
+#define MAX_TESTERS 100
+
+#define MAX_TESTER_NAME 100
+
+#endif

@@ -1,0 +1,336 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="bcp">
+      <UniqueIdentifier>{8e054c91-db7e-4b38-acae-b88e8b9e200d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="clause_learning">
+      <UniqueIdentifier>{800a18f9-f817-4b5a-a914-960b8f15b708}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="conflict_analysis">
+      <UniqueIdentifier>{899171aa-0e6e-4855-99f4-fd802e218839}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{659312e4-ce97-42e4-8cc9-7415f78c1b1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="statistics">
+      <UniqueIdentifier>{007eea4d-1947-4ed9-9e16-514e95d1046c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{c991e016-6134-42a5-9452-bcd4e667ed11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{c684a41b-2e76-4606-92b1-e1f56bcb15b9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src\UnitTesting\main.cu" />
+    <CudaCompile Include="..\..\src\UnitTesting\Tester.cu" />
+    <CudaCompile Include="..\..\src\UnitTesting\BCPStrategy\WatchedClausesListTester.cu">
+      <Filter>bcp</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\ClauseLearning\LearntClausesManagerTester.cu">
+      <Filter>clause_learning</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\ConflictAnalysis\ConflictAnalyzerGenericTester.cu">
+      <Filter>conflict_analysis</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\ConflictAnalysis\ConflictAnalyzerWithWatchedLitsTester.cu">
+      <Filter>conflict_analysis</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\ConflictAnalysis\CUDAListGraphTester.cu">
+      <Filter>conflict_analysis</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\ConflictAnalysis\PropagationTester.cu">
+      <Filter>conflict_analysis</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\SATSolver\BacktrackerTester.cu">
+      <Filter>core</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\Statistics\RuntimeStatisticsTester.cu">
+      <Filter>utils</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\Utils\GPULinkedListTester.cu">
+      <Filter>statistics</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\Utils\NodesRepositoryTester.cu">
+      <Filter>statistics</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\UnitTesting\Utils\StringUtils.cu">
+      <Filter>utils</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\BCPStrategy\ClauseListStructure.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\BCPStrategy\WatchedClausesList.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ClauseLearning\LearntClauseRepository.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ClauseLearning\LearntClausesManager.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\ConflictAnalyzer.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\ConflictAnalyzerFullSearchSpace.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\ConflictAnalyzerWithWatchedLits.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\CUDAListGraph.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\GraphAnalyzer.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ConflictAnalysis\GraphStructure.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\DecisionStrategy\Heap.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\DecisionStrategy\var_indexed_vector.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\DecisionStrategy\VSIDS.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\ErrorHandler\CudaMemoryErrorHandler.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\FileManager\FileUtils.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\FileManager\FormulaData.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\JobsManager\JobChooser.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\JobsManager\SimpleJobChooser.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\JobsManager\Sort.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\JobsManager\VariableChooser.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Preprocessing\RepeatedLiteralsRemover.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Preprocessing\UnaryClausesRemover.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Restarts\GeometricRestartsManager.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\Backtracker.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\DataToDevice.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\DecisionMaker.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\JobsQueue.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\Parallelizer.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\Results.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\SATSolver.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\SolverTypes.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\SATSolver\VariablesStateHandler.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Statistics\RuntimeStatistics.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\Utils\CUDAClauseVec.cu">
+      <Filter>src</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\UnitTesting\TestConfigs.cuh" />
+    <ClInclude Include="..\..\src\UnitTesting\Tester.cuh" />
+    <ClInclude Include="..\..\src\UnitTesting\BCPStrategy\WatchedClausesListTester.cuh">
+      <Filter>bcp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\ClauseLearning\LearntClausesManagerTester.cuh">
+      <Filter>clause_learning</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\ConflictAnalysis\ConflictAnalyzerGenericTester.cuh">
+      <Filter>conflict_analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\ConflictAnalysis\ConflictAnalyzerWithWatchedLitsTester.cuh">
+      <Filter>conflict_analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\ConflictAnalysis\CUDAListGraphTester.cuh">
+      <Filter>conflict_analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\ConflictAnalysis\PropagationTester.cuh">
+      <Filter>conflict_analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\SATSolver\BacktrackerTester.cuh">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\Statistics\RuntimeStatisticsTester.cuh">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\Utils\GPULinkedListTester.cuh">
+      <Filter>statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\Utils\NodesRepositoryTester.cuh">
+      <Filter>statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UnitTesting\Utils\StringUtils.cuh">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\BCPStrategy\WatchedClausesList.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ClauseLearning\LearntClauseRepository.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ClauseLearning\LearntClausesManager.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConflictAnalysis\ConflictAnalyzer.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConflictAnalysis\ConflictAnalyzerFullSearchSpace.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConflictAnalysis\ConflictAnalyzerWithWatchedLits.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConflictAnalysis\CUDAListGraph.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConflictAnalysis\GraphAnalyzer.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\DecisionStrategy\Heap.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\DecisionStrategy\VSIDS.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ErrorHandler\CudaMemoryErrorHandler.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FileManager\CnfReader.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FileManager\FileUtils.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FileManager\FormulaData.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FileManager\ParametersManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FileManager\Version.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\JobsManager\JobChooser.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\JobsManager\SimpleJobChooser.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\JobsManager\Sort.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\JobsManager\VariableChooser.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Preprocessing\RepeatedLiteralsRemover.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Preprocessing\UnaryClausesRemover.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Restarts\GeometricRestartsManager.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Restarts\RestartsManager.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\Backtracker.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\Configs.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\DataToDevice.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\DecisionMaker.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\JobsQueue.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\Parallelizer.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\Results.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\SATSolver.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\SolverTypes.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SATSolver\VariablesStateHandler.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Statistics\RuntimeStatistics.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Statistics\StatisticsCalculator.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\CUDAClauseVec.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\GPULinkedList.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\GPUStaticVec.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\GPUVec.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\NodesRepository.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Utils\Stopwatch.cuh">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\FileManager\CnfReader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FileManager\ParametersManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
