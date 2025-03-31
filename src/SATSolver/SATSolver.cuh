@@ -87,7 +87,6 @@ private:
 
     __device__ void restart();
 
-
 public:
     __device__ SATSolver(const CUDAClauseVec *formula,
                          int n_vars,
@@ -96,11 +95,12 @@ public:
                           * Variables to be ignored (specially if they are already solved).
                           * Should not be contained on the assumptions.
                           */
-                         const GPUVec<Var> *dead_vars,
+                         const Var *dead_vars_elements_ptr, // Pass raw pointer
+                         size_t dead_vars_size,             // Pass size
                          RuntimeStatistics *statistics,
                          watched_clause_node_t *node_repository
                          //,GPUVec<WatchedClause> & watched_clauses
-                        );
+    );
 
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
     __device__ sat_status solve(GPUVec<Lit> *assumptions);

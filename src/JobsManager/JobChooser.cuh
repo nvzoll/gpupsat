@@ -13,7 +13,11 @@
  * or as many as possible)
  *
  */
-enum class ChoosingStrategy { DISTRIBUTE_JOBS_PER_THREAD, UNIFORM };
+enum class ChoosingStrategy
+{
+    DISTRIBUTE_JOBS_PER_THREAD,
+    UNIFORM
+};
 
 #include "VariableChooser.cuh"
 #include "SATSolver/JobsQueue.cuh"
@@ -22,54 +26,16 @@ class JobChooser
 {
 public:
     virtual void evaluate() = 0;
-    virtual void getJobs(JobsQueue& queue) = 0;
+    virtual void getJobs(JobsQueue &queue) = 0;
     virtual size_t get_n_jobs() = 0;
     virtual bool is_evaluated() = 0;
+    // Added pure virtual function for estimating total literals (removed const for diagnostics)
+    virtual size_t estimateTotalLiteralSize() = 0;
 
-private:
-    virtual void addJobs(Lit *fixed_lits, size_t n_fixed_lits, JobsQueue& queue) = 0;
+protected: // Changed from private to allow override
+    virtual void addJobs(Lit *fixed_lits, size_t n_fixed_lits, JobsQueue &queue) = 0;
 };
 
-class MaxClauseJobChooser : public JobChooser
-{
-public:
-    MaxClauseJobChooser(
-        std::vector<Clause> const& formula,
-        size_t n_vars,
-        size_t n_dead_vars,
-        size_t n_threads,
-        size_t n_blocks);
-
-    MaxClauseJobChooser(
-        std::vector<Clause> const& formula,
-        size_t n_vars,
-        size_t n_dead_vars,
-        size_t threads,
-        size_t n_blocks,
-        ChoosingStrategy strategy);
-
-    ~MaxClauseJobChooser();
-
-    void evaluate();
-    void getJobs(JobsQueue& queue);
-    size_t get_n_jobs();
-    bool is_evaluated();
-
-private:
-    VariableChooser var_chooser;
-    size_t n_working_vars;
-    bool evaluated;
-    size_t n_threads;
-    size_t n_blocks;
-    std::vector<Var> chosen_vars;
-    std::vector<Lit> m_fixed_lits;
-    size_t vars_per_job;
-    ChoosingStrategy strategy;
-
-    void addJobs(Lit *fixed_lits, size_t n_fixed_lits, JobsQueue& queue);
-    void evalVarPerJobs();
-    void evalVarPerJobsDistribute();
-    void evalVarPerJobsUniform();
-};
+// MaxClauseJobChooser declaration moved to MaxClauseJobChooser.cuh
 
 #endif /* __JOBCHOOSER_CUH__ */
