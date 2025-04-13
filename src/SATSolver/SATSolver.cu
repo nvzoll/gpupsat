@@ -1,45 +1,40 @@
 #include "SATSolver.cuh"
 
-__device__ SATSolver::SATSolver(
-    const CUDAClauseVec *formula,
-    int n_vars,
-    int max_implication_per_var,
-    const GPUVec<Var> *dead_vars,
-    RuntimeStatistics *statistics,
-    watched_clause_node_t *node_repository
+__device__ SATSolver::SATSolver(const CUDAClauseVec *formula, int n_vars, int max_implication_per_var,
+    const GPUVec<Var> *dead_vars, RuntimeStatistics *statistics, watched_clause_node_t *node_repository
     /*, GPUVec<WatchedClause> & watched_clauses*/)
 
-    : decision_maker(&vars_handler, formula, n_vars)
+    : decision_maker(formula, n_vars)
     , vars_handler(n_vars, dead_vars, &decision_maker)
 
     , conflictAnalyzer(n_vars, formula, &vars_handler,
 #if CONFLICT_ANALYSIS_STRATEGY != FULL_SPACE_SEARCH
 #ifdef USE_CONFLICT_ANALYSIS
-                       true,
+          true,
 #else
-                       false,
+          false,
 #endif
 #endif
-                       max_implication_per_var, &decision_maker
-                       , statistics
+          max_implication_per_var, &decision_maker, statistics
 #if CONFLICT_ANALYSIS_STRATEGY == TWO_WATCHED_LITERALS
-                       , node_repository
-                       //, watched_clauses
+          ,
+          node_repository
+//, watched_clauses
 #endif
-                      )
+          )
 
-#ifdef  USE_RESTART
+#ifdef USE_RESTART
     , geometric_restart(GEOMETRIC_CONFLICTS_BEFORE_RESTART, GEOMETRIC_RESTART_INCREASE_FACTOR)
 #endif
 #ifdef USE_RESTART
 #endif
 
-    , formula { formula }
-    //, decision_level { 0 }
+    , formula { formula } //, decision_level { 0 }
     , n_vars { n_vars }
     , current_status { sat_status::UNDEF }
     , stats { statistics }
 {
+    decision_maker.set_vars_handler(&vars_handler);
     next_decision.decision_level = NULL_DECISION_LEVEL;
 }
 
@@ -61,7 +56,7 @@ __device__ sat_status SATSolver::solve()
     GPUStaticVec<Lit> no_assumptions;
 #endif
     sat_status status = solve(&no_assumptions);
-    vars_handler.set_assumptions(nullptr);
+    vars_handler.set_assumptions(&no_assumptions);
 
     return status;
 }
@@ -128,15 +123,14 @@ __device__ sat_status SATSolver::solve(
     while (true) {
         if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
             printf("DEBUG (%d, %d): implication graph on iteration %d is:\n", blockIdx.x, threadIdx.x, n_iterations);
-            //conflictAnalyzer.print_graph();
+            // conflictAnalyzer.print_graph();
             vars_handler.print_decisions();
             vars_handler.print_implications();
             vars_handler.print_assumptions();
         }
 
         stats->signal_decision_start();
-        bool decision_status =
-            decision_maker.decide().decision_level != NULL_DECISION_LEVEL;//decide();
+        bool decision_status = decision_maker.decide().decision_level != NULL_DECISION_LEVEL; // decide();
         stats->signal_decision_stop();
 
         if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
@@ -195,7 +189,6 @@ __device__ sat_status SATSolver::solve(
             return sat_status::UNDEF;
         }
 #endif
-
     }
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
@@ -232,10 +225,7 @@ __device__ sat_status SATSolver::solve(
  * implications (BCP through UP). Returns if the decisions have satisfied, unsatisfied or not
  * changed the current status of the formula.
  */
-__device__ sat_status SATSolver::propagate(Decision d)
-{
-    return conflictAnalyzer.propagate(d);
-}
+__device__ sat_status SATSolver::propagate(Decision d) { return conflictAnalyzer.propagate(d); }
 
 /**
  * This method sets the assumptions, remove the assumptions from the free vars and
@@ -255,10 +245,9 @@ __device__ sat_status SATSolver::preprocess(
 
     stats->signal_pre_proc_handling_vars_stop();
 
-    sat_status status_post_preprocessing =
-        conflictAnalyzer.set_assumptions(assumptions);
+    sat_status status_post_preprocessing = conflictAnalyzer.set_assumptions(assumptions);
 
-    //vars_handler.print_assumptions();
+    // vars_handler.print_assumptions();
 
     if (status_post_preprocessing != sat_status::UNDEF) {
         return status_post_preprocessing;
@@ -269,20 +258,17 @@ __device__ sat_status SATSolver::preprocess(
         vars_handler.print_assumptions();
     }
 
-    if (vars_handler.no_assumptions()
-        && vars_handler.no_implications()
-        && vars_handler.no_decisions()) {
+    if (vars_handler.no_assumptions() && vars_handler.no_implications() && vars_handler.no_decisions()) {
         return sat_status::UNDEF;
     }
 
-    if (status_post_preprocessing == sat_status::UNDEF &&
-        vars_handler.no_free_vars()) {
+    if (status_post_preprocessing == sat_status::UNDEF && vars_handler.no_free_vars()) {
         status_post_preprocessing = sat_status::SAT;
     }
 
     // if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
-        //printf("Preprocessing has generated this implication graph:\n");
-        //conflictAnalyzer.print_graph();
+    // printf("Preprocessing has generated this implication graph:\n");
+    // conflictAnalyzer.print_graph();
     // }
 
     return status_post_preprocessing;
@@ -292,8 +278,7 @@ __device__ void SATSolver::get_results(Lit *results)
 {
     if (current_status != sat_status::SAT) {
         return;
-    }
-    else {
+    } else {
         int next_pos = 0;
 
         for (int i = 0; i < vars_handler.n_decisions(); i++) {
@@ -316,8 +301,7 @@ __device__ void SATSolver::get_results(Lit *results)
 
 __device__ size_t SATSolver::get_results_size()
 {
-    size_t size = vars_handler.n_decisions()
-                + vars_handler.n_implications();
+    size_t size = vars_handler.n_decisions() + vars_handler.n_implications();
 
     size += vars_handler.assumptions_set() ? vars_handler.n_assumptions() : 0;
 

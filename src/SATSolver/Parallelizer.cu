@@ -1,9 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "Parallelizer.cuh"
+#include <stdio.h>
+#include <stdlib.h>
 
-__device__ __forceinline__
-int get_thread_id() { return threadIdx.x + blockIdx.x * blockDim.x; }
+__device__ __forceinline__ int get_thread_id() { return threadIdx.x + blockIdx.x * blockDim.x; }
 
 struct KernelContext {
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
@@ -25,50 +24,51 @@ struct KernelContext {
 
     unsigned *answer_ptr;
 
-    __device__
-    KernelContext(DataToDevice *data)
+    __device__ KernelContext(DataToDevice *data)
         : st { data->get_statistics_ptr() }
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
-        , assumptions { data->get_all_assumptions_parallel().get_ptr(index) };
+        , assumptions {
+            data->get_all_assumptions_parallel().get_ptr(index)
+        };
 #else
         , the_assumptions()
         , assumptions { &the_assumptions }
 #endif
-        , queue { data->get_jobs_queue_ptr() }
-        , solver(data->get_clauses_db_ptr(),
-                 data->get_n_vars(),
-                 data->get_max_implication_per_var(),
-                 data->get_dead_vars_ptr(),
-                 st,
-                 data->get_nodes_repository_ptr()
-                 /*, watched_clauses*/)
+        , queue { data->get_jobs_queue_dptr() }
+        , solver(
+            data->get_clauses_db_dptr(), 
+            data->get_n_vars(), 
+            data->get_max_implication_per_var(),
+            data->get_dead_vars_ptr(), 
+            st, 
+            data->get_nodes_repository_ptr()
+        )
         , solved_jobs { 0 }
         , answer_ptr { data->get_found_answer_ptr() }
-        // , watched_clauses { data.get_watched_clauses(index) }
+    // , watched_clauses { data.get_watched_clauses(index) }
     {
         next_job_available();
     }
 
-    __device__
-    ~KernelContext() { }
+    __device__ ~KernelContext() { }
 
-    __device__
-    void solve()
+    __device__ void solve()
     {
-        if (job.n_literals == 0
-            && !next_job_available()) {
+        if (job.n_literals == 0 && !next_job_available()) {
             return;
         }
 
         status = solver.solve(assumptions);
     }
 
-    __device__
-    bool finished()
+    __device__ bool finished()
     {
-        if (status == sat_status::SAT
-            || status == sat_status::UNDEF) {
+        if (status == sat_status::SAT || status == sat_status::UNDEF) {
             return true;
+        }
+
+        if (job.n_literals == 0) {
+            return !next_job_available();
         }
 
         reset_solver();
@@ -77,34 +77,32 @@ struct KernelContext {
         return !next_job_available();
     }
 
-    __device__
-    bool next_job_available()
+    __device__ bool next_job_available()
     {
         st->signal_next_job_start();
         job = queue->next_job();
         st->signal_next_job_stop();
 
+        // printf("Job available: %d\n", job.n_literals);
+
         return (job.n_literals != 0);
     }
 
-    __device__
-    void reset_solver()
+    __device__ void reset_solver()
     {
         st->signal_reset_structures_start();
         solver.reset();
         st->signal_reset_structures_stop();
     }
 
-    __device__
-    void remove_last_assumptions()
+    __device__ void remove_last_assumptions()
     {
         st->signal_add_jobs_to_assumptions_start();
         assumptions->remove_n_last(job.n_literals);
         st->signal_add_jobs_to_assumptions_stop();
     }
 
-    __device__
-    void add_assumptions()
+    __device__ void add_assumptions()
     {
         st->signal_add_jobs_to_assumptions_start();
 
@@ -116,15 +114,13 @@ struct KernelContext {
     }
 };
 
-__device__ __forceinline__
-KernelContext *get_ctx(KernelContextStorage *storage)
+__device__ __forceinline__ KernelContext *get_ctx(KernelContextStorage *storage)
 {
     KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
     return row[threadIdx.x];
 }
 
-__device__ __forceinline__
-void save_ctx(KernelContext *ctx, KernelContextStorage *storage)
+__device__ __forceinline__ void save_ctx(KernelContext *ctx, KernelContextStorage *storage)
 {
     KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
     row[threadIdx.x] = ctx;
@@ -137,7 +133,7 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     RuntimeStatistics *st = data[index].get_statistics_ptr();
 
     st->signal_create_structures_start();
-        KernelContext *ctx = new KernelContext(&data[index]);
+    KernelContext *ctx = new KernelContext(&data[index]);
     st->signal_create_structures_stop();
 
     save_ctx(ctx, &storage);
@@ -147,7 +143,7 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     }
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
-        printf("Block: %d, thread: %d, index: %d\n", blockIdx.x, threadIdx.x, index );
+        printf("Block: %d, thread: %d, index: %d\n", blockIdx.x, threadIdx.x, index);
         printf("Largest job is : %d\n", ctx->queue->largest_job_size());
         printf("Number of literals: %d\n", ctx->job.n_literals);
     }
@@ -242,21 +238,17 @@ __global__ void run_sequential(DataToDevice data, int *state)
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
     GPUVec<Lit> assumptions = data.get_assumptions_sequential();
 #else
-    //GPUStaticVec<Lit> assumptions = data.get_assumptions_sequential();
+    // GPUStaticVec<Lit> assumptions = data.get_assumptions_sequential();
 #endif
 
-    Results  results = data.get_results();
+    Results results = data.get_results();
 
-    //GPUVec <WatchedClause> watched_clauses = data.get_watched_clauses(0);
+    // GPUVec <WatchedClause> watched_clauses = data.get_watched_clauses(0);
 
-    SATSolver *solver = new SATSolver(clauses_db,
-                                      n_vars,
-                                      data.get_max_implication_per_var(),
-                                      data.get_dead_vars_ptr(),
-                                      st,
-                                      data.get_nodes_repository_ptr()
-                                      //, watched_clauses
-                                     );
+    SATSolver *solver = new SATSolver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
+        st, data.get_nodes_repository_ptr()
+        //, watched_clauses
+    );
 
     st->signal_create_structures_stop();
     st->signal_job_start();
@@ -295,4 +287,3 @@ __global__ void run_sequential(DataToDevice data, int *state)
 
     delete solver;
 }
-
