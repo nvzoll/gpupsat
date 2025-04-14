@@ -1,15 +1,12 @@
 #include "DecisionMaker.cuh"
 
 __device__ DecisionMaker::DecisionMaker(
-    VariablesStateHandler *handler,
     const CUDAClauseVec *formula,
     size_t n_vars)
 #ifdef USE_VSIDS
     : vsids(n_vars)
 #endif
 {
-    this->vars_handler = handler;
-
 #ifdef USE_VSIDS
     for (int i = 0; i < formula->size_of(); i++) {
         vsids.handle_clause(formula->get(i));
