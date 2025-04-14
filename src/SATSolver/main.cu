@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <algorithm>
@@ -18,13 +18,7 @@
 #include "Parallelizer.cuh"
 #include "Results.cuh"
 
-void print_info(
-    int& n_blocks,
-    int& n_threads,
-    ParametersManager& pm,
-    int& n_vars,
-    int& n_clauses,
-    FormulaData& fdata,
+void print_info(int& n_blocks, int& n_threads, ParametersManager& pm, int& n_vars, int& n_clauses, FormulaData& fdata,
     int& max_implication_per_var)
 {
     if (n_blocks < 1) {
@@ -37,16 +31,12 @@ void print_info(
     if (pm.get_verbosity_level() >= 1) {
         printf("Solver configuration:\n");
         printf("Input file: %s\n", pm.get_input_file());
-        printf("Formula has %d vars and %d clauses\n", n_vars,
-               n_clauses);
-        printf("Variable '%d', the most frequent, has been found %d times.\n",
-               fdata.get_most_common_var() + 1,
-               fdata.get_frequency_of_most_common_var());
-        if (pm.get_n_threads() == 1
-            && !pm.get_sequential_as_parallel()) {
+        printf("Formula has %d vars and %d clauses\n", n_vars, n_clauses);
+        printf("Variable '%d', the most frequent, has been found %d times.\n", fdata.get_most_common_var() + 1,
+            fdata.get_frequency_of_most_common_var());
+        if (pm.get_n_threads() == 1 && !pm.get_sequential_as_parallel()) {
             printf("Parallelization strategy: SEQUENTIAL RUN\n");
-        }
-        else {
+        } else {
             printf("Parallelization strategy: Divide and Conquer\n");
             printf("Number of blocks: %d\n", pm.get_n_blocks());
             printf("Number of threads: %d\n", pm.get_n_threads());
@@ -73,8 +63,7 @@ void print_info(
         printf(" allocated vector.\n");
         printf("Formula clauses are stored in ");
         printf("several allocations.\n");
-        printf("Unary clauses pre-processing is %s\n", pm.get_preprocess_unary_clauses()
-               ? "ON" : "OFF");
+        printf("Unary clauses pre-processing is %s\n", pm.get_preprocess_unary_clauses() ? "ON" : "OFF");
         printf("Conflict analysis is ");
         switch (CONFLICT_ANALYSIS_STRATEGY) {
         case BASIC_SEARCH:
@@ -115,13 +104,11 @@ void print_info(
 #else
     printf("OFF\n");
 #endif
-
 }
 
 int main(int argc, char *argv[])
 {
-    check(cudaSetDeviceFlags(cudaDeviceMapHost),
-          "Setting device flag");
+    check(cudaSetDeviceFlags(cudaDeviceMapHost), "Setting device flag");
 
     ParametersManager pm(argc, argv);
 
@@ -143,12 +130,11 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    if (fdata.get_n_vars() < MIN_VARIABLES_TO_PARALLELIZE &&
-        (pm.get_n_blocks() > 1 || pm.get_n_threads() > 1 ||
-         pm.get_sequential_as_parallel())) {
+    if (fdata.get_n_vars() < MIN_VARIABLES_TO_PARALLELIZE
+        && (pm.get_n_blocks() > 1 || pm.get_n_threads() > 1 || pm.get_sequential_as_parallel())) {
         printf("Warning: There are %d vars in the formula and at least %d "
                "are necessary to parallelize. Forcing sequential execution!\n",
-               fdata.get_n_vars(), MIN_VARIABLES_TO_PARALLELIZE);
+            fdata.get_n_vars(), MIN_VARIABLES_TO_PARALLELIZE);
         pm.force_sequential_configuration();
     }
 
@@ -163,14 +149,7 @@ int main(int argc, char *argv[])
     // This holds the max implication a var may have, to set the capacity of edges.
     int max_implication_per_var = std::max(fdata.get_largest_clause_size(), MIN_IMPLICATION_PER_VAR);
 
-    print_info(
-        n_blocks,
-        n_threads,
-        pm,
-        n_vars,
-        n_clauses,
-        fdata,
-        max_implication_per_var);
+    print_info(n_blocks, n_threads, pm, n_vars, n_clauses, fdata, max_implication_per_var);
 
     if (fdata.get_status_after_preprocessing() != sat_status::UNDEF) {
         if (pm.get_verbosity_level() >= 1) {
@@ -206,44 +185,32 @@ int main(int argc, char *argv[])
     DataToDevice *data_host_ptr;
     DataToDevice *data_dev_ptr;
 
-    check(cudaHostAlloc(&state_host_ptr, sizeof(int), cudaHostAllocMapped),
-          "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&state_dev_ptr, state_host_ptr, 0),
-          "Retrieve state dev_ptr");
+    check(cudaHostAlloc(&state_host_ptr, sizeof(int), cudaHostAllocMapped), "Alloc pinned memory");
+    check(cudaHostGetDevicePointer(&state_dev_ptr, state_host_ptr, 0), "Retrieve state dev_ptr");
 
     check(cudaHostAlloc(&data_host_ptr, (sizeof(DataToDevice) * n_blocks * n_threads), cudaHostAllocMapped),
-          "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0),
-          "Retrieve state dev_ptr");
+        "Alloc pinned memory");
+    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0), "Retrieve state dev_ptr");
     *state_host_ptr = INT_MAX;
 
-    check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT),
-          "Set stack limit");
+    check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT), "Set stack limit");
 
-    check(cudaThreadSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT),
-          "Set heap limit");
+    check(cudaThreadSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
 
     float elapsedTime = 0.;
     CudaStopwatch stopwatch;
 
-    if (n_threads == 1 && n_blocks == 1
-        && !pm.get_sequential_as_parallel()) {
+    if (n_threads == 1 && n_blocks == 1 && !pm.get_sequential_as_parallel()) {
         if (pm.get_verbosity_level() >= 1) {
             printf("Number of jobs = 1\n");
         }
 #ifdef DEBUG
         printf("About to call sequential kernel!\n");
 #endif
-        DataToDevice::numbers n = {
-            n_vars,
-            n_clauses,
-            0, 1, 1,
-            max_implication_per_var
-        };
+        DataToDevice::numbers n = { n_vars, n_clauses, 0, 1, 1, max_implication_per_var };
 
-        DataToDevice data(formula, dead_vars_dev,
-            RuntimeStatistics(n.blocks, n.threads, nullptr),
-            n, DataToDevice::atomics());
+        DataToDevice data(
+            formula, dead_vars_dev, RuntimeStatistics(n.blocks, n.threads, nullptr), n, DataToDevice::atomics());
 
         data.prepare_sequencial();
 
@@ -252,18 +219,12 @@ int main(int argc, char *argv[])
         elapsedTime = stopwatch.stop();
 
         results = data.get_results_ptr();
-    }
-    else {
+    } else {
 #ifdef USE_SIMPLE_JOBS_GENERATION
         SimpleJobChooser chooser(n_vars, dead_vars_host);
 #else
         MaxClauseJobChooser chooser(
-                                formula_host,
-                                n_vars,
-                                dead_vars_dev.size_of(),
-                                n_threads,
-                                n_blocks,
-                                pm.get_choosing_strategy());
+            formula_host, n_vars, dead_vars_dev.size_of(), n_threads, n_blocks, pm.get_choosing_strategy());
 #endif
         chooser.evaluate();
 
@@ -277,41 +238,28 @@ int main(int argc, char *argv[])
         unsigned zero = 0;
 
         check(cudaMalloc(&atomics.next_job, sizeof(unsigned)), "Allocating counter");
-        check(cudaMemcpy(atomics.next_job, &zero, sizeof(unsigned), cudaMemcpyHostToDevice),
-              "Zeroing counter");
+        check(cudaMemcpy(atomics.next_job, &zero, sizeof(unsigned), cudaMemcpyHostToDevice), "Zeroing counter");
 
         check(cudaMalloc(&atomics.completed_jobs, sizeof(unsigned)), "Allocating counter");
-        check(cudaMemcpy(atomics.completed_jobs, &zero, sizeof(unsigned), cudaMemcpyHostToDevice),
-              "Zeroing counter");
+        check(cudaMemcpy(atomics.completed_jobs, &zero, sizeof(unsigned), cudaMemcpyHostToDevice), "Zeroing counter");
 
-        DataToDevice::numbers n = {
-            n_vars,
-            n_clauses,
-            n_jobs,
-            n_blocks,
-            n_threads,
-            max_implication_per_var
-        };
+        DataToDevice::numbers n = { n_vars, n_clauses, n_jobs, n_blocks, n_threads, max_implication_per_var };
 
         RuntimeStatistics stat(n.blocks, n.threads, atomics.completed_jobs);
 
-        DataToDevice *data_iter = data_host_ptr;
-        for (size_t i = 0; i < (size_t)n_blocks * n_threads; ++i) {
-            DataToDevice data(formula, dead_vars_dev, stat, n, atomics);
-            data.prepare_parallel(*dynamic_cast<JobChooser*>(&chooser)
+        DataToDevice data(formula, dead_vars_dev, stat, n, atomics);
+        data.prepare_parallel(*dynamic_cast<JobChooser *>(&chooser)
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
-                                  , assumptions
+                                  ,
+            assumptions
 #endif
-                                  );
-            memcpy(data_iter, &data, sizeof(data));
-            data_iter++;
-        }
+        );
+        memcpy(data_host_ptr, &data, sizeof(data));
 
         KernelContextStorage thread_contexts;
 
-        check(cudaMallocPitch(&thread_contexts.data,
-              &thread_contexts.pitch, n_threads * sizeof(void *), n_blocks),
-              "Allocate thread contexts");
+        check(cudaMallocPitch(&thread_contexts.data, &thread_contexts.pitch, n_threads * sizeof(void *), n_blocks),
+            "Allocate thread contexts");
 
         printf("About to invoke kernel...\n");
 
@@ -338,7 +286,7 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        DataToDevice *winner = &data_host_ptr[*state_host_ptr];
+        DataToDevice *winner = data_host_ptr;
 
         parallel_kernel_retrieve_results<<<n_blocks, n_threads>>>(*winner, thread_contexts);
 
@@ -356,7 +304,7 @@ int main(int argc, char *argv[])
 
         cudaDeviceSynchronize();
 
-        winner->get_statistics().print_function_time_statistics();
+        // winner->get_statistics().print_function_time_statistics();
 #endif // ENABLE_STATISTICS
     }
 
@@ -367,8 +315,7 @@ int main(int argc, char *argv[])
     if (pm.get_write_log()) {
         char buf[256];
         std::ofstream out("autolog.txt", std::ios_base::app);
-        std::snprintf(buf, sizeof(buf), "%s,%d,%d,%f\n",
-            pm.get_input_file(), n_threads, n_blocks, elapsedTime);
+        std::snprintf(buf, sizeof(buf), "%s,%d,%d,%f\n", pm.get_input_file(), n_threads, n_blocks, elapsedTime);
         out << buf;
     }
 

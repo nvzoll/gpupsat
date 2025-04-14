@@ -34,17 +34,10 @@ struct KernelContext {
         , the_assumptions()
         , assumptions { &the_assumptions }
 #endif
-        , queue { data->get_jobs_queue_dptr() }
-        , solver(
-            data->get_clauses_db_dptr(), 
-            data->get_n_vars(), 
-            data->get_max_implication_per_var(),
-            data->get_dead_vars_ptr(), 
-            st, 
-            data->get_nodes_repository_ptr()
-        )
-        , solved_jobs { 0 }
-        , answer_ptr { data->get_found_answer_ptr() }
+    , queue { data->get_jobs_queue_dptr() },
+        solver(data->get_clauses_db_dptr(), data->get_n_vars(), data->get_max_implication_per_var(),
+            data->get_dead_vars_ptr(), st, data->get_nodes_repository_ptr()),
+        solved_jobs { 0 }, answer_ptr { data->get_found_answer_ptr() }
     // , watched_clauses { data.get_watched_clauses(index) }
     {
         next_job_available();
@@ -130,10 +123,10 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
 {
     int index = get_thread_id();
 
-    RuntimeStatistics *st = data[index].get_statistics_ptr();
+    RuntimeStatistics *st = data->get_statistics_ptr();
 
     st->signal_create_structures_start();
-    KernelContext *ctx = new KernelContext(&data[index]);
+    KernelContext *ctx = new KernelContext(data);
     st->signal_create_structures_stop();
 
     save_ctx(ctx, &storage);
