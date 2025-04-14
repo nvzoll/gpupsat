@@ -152,9 +152,7 @@ int main(int argc, char *argv[])
     print_info(n_blocks, n_threads, pm, n_vars, n_clauses, fdata, max_implication_per_var);
 
     if (fdata.get_status_after_preprocessing() != sat_status::UNDEF) {
-        if (pm.get_verbosity_level() >= 1) {
-            printf("Solved in pre-processing.\n");
-        }
+        printf("Solved in pre-processing.\n");
 
         Results res(n_vars, false);
 
@@ -194,19 +192,14 @@ int main(int argc, char *argv[])
     *state_host_ptr = INT_MAX;
 
     check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT), "Set stack limit");
-
     check(cudaThreadSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
 
     float elapsedTime = 0.;
     CudaStopwatch stopwatch;
 
     if (n_threads == 1 && n_blocks == 1 && !pm.get_sequential_as_parallel()) {
-        if (pm.get_verbosity_level() >= 1) {
-            printf("Number of jobs = 1\n");
-        }
-#ifdef DEBUG
         printf("About to call sequential kernel!\n");
-#endif
+
         DataToDevice::numbers n = { n_vars, n_clauses, 0, 1, 1, max_implication_per_var };
 
         DataToDevice data(
@@ -230,18 +223,15 @@ int main(int argc, char *argv[])
 
         int n_jobs = chooser.get_n_jobs();
 
-        if (pm.get_verbosity_level() >= 1) {
-            printf("Number of jobs = %d\n", n_jobs);
-        }
+        printf("Number of jobs = %d\n", n_jobs);
 
         DataToDevice::atomics atomics = { 0 };
-        unsigned zero = 0;
 
         check(cudaMalloc(&atomics.next_job, sizeof(unsigned)), "Allocating counter");
-        check(cudaMemcpy(atomics.next_job, &zero, sizeof(unsigned), cudaMemcpyHostToDevice), "Zeroing counter");
+        check(cudaMemset(atomics.next_job, 0, sizeof(unsigned)), "Zeroing counter");
 
         check(cudaMalloc(&atomics.completed_jobs, sizeof(unsigned)), "Allocating counter");
-        check(cudaMemcpy(atomics.completed_jobs, &zero, sizeof(unsigned), cudaMemcpyHostToDevice), "Zeroing counter");
+        check(cudaMemset(atomics.completed_jobs, 0, sizeof(unsigned)), "Zeroing counter");
 
         DataToDevice::numbers n = { n_vars, n_clauses, n_jobs, n_blocks, n_threads, max_implication_per_var };
 
