@@ -8,24 +8,25 @@ Results::Results(int n_vars, bool on_gpu)
 {
 
     if (on_gpu) {
-        check(cudaMalloc(&results_dev, sizeof(sat_status) * n_vars), "Allocating results on GPU");
+        check(cudaMalloc(&results_dev, sizeof(sat_status)*n_vars), "Allocating results on GPU");
         check(cudaMalloc(&formula_status_dev, sizeof(sat_status)), "Allocating results on GPU");
 
         sat_status undef_stat = sat_status::UNDEF;
         sat_status unsat_stat = sat_status::UNSAT;
 
         check(cudaMemcpy(formula_status_dev, &unsat_stat, sizeof(sat_status), cudaMemcpyHostToDevice),
-            "Copying results to GPU");
+              "Copying results to GPU");
 
         for (int i = 0; i < n_vars; i++) {
             check(cudaMemcpy(results_dev + i, &undef_stat, sizeof(sat_status), cudaMemcpyHostToDevice), "Copying results to GPU");
         }
-    } else {
+    }
+    else {
         formula_status_host = sat_status::UNSAT;
     }
 }
 
-__device__ void Results::set_satisfiable_results(Lit* the_results, int size)
+__device__ void Results::set_satisfiable_results(Lit *the_results, int size)
 {
     assert(on_gpu);
 
@@ -69,11 +70,12 @@ __host__ void Results::print_results(
 
     if (on_gpu) {
         check(cudaMemcpy(&status, formula_status_dev, sizeof(sat_status), cudaMemcpyDeviceToHost), "Copying results from GPU");
-    } else {
+    }
+    else {
         status = formula_status_host;
     }
 
-    switch (status) {
+    switch(status) {
     case sat_status::UNDEF:
         printf("UNDEFINED\n");
         break;
@@ -96,7 +98,8 @@ __host__ sat_status Results::get_status()
 
     if (on_gpu) {
         check(cudaMemcpy(&status, formula_status_dev, sizeof(sat_status), cudaMemcpyDeviceToHost), "Copying results from GPU");
-    } else {
+    }
+    else {
         status = formula_status_host;
     }
 
@@ -112,9 +115,10 @@ __host__ void Results::print_sat_results(
 
     if (on_gpu) {
         check(cudaMemcpy(results_host.data(), results_dev,
-                  results_host.size() * sizeof(sat_status), cudaMemcpyDeviceToHost),
-            "Copying results from GPU");
-    } else {
+            results_host.size() * sizeof(sat_status), cudaMemcpyDeviceToHost),
+              "Copying results from GPU");
+    }
+    else {
         for (int i = 0; i < n_vars; i++) {
             results_host[i] = sat_status::UNDEF;
         }
@@ -129,7 +133,8 @@ __host__ void Results::print_sat_results(
     for (int i = 0; i < n_vars; i++) {
         if (results_host[i] == sat_status::SAT || results_host[i] == sat_status::UNDEF) {
             printf("%d ", i + 1);
-        } else {
+        }
+        else {
             if (results_host[i] == sat_status::UNSAT) {
                 printf("-%d ", i + 1);
             }

@@ -1,61 +1,25 @@
 #include "ConflictAnalyzerWithWatchedLits.cuh"
 
-#include <assert.h> // Make sure assert is included
-
 __device__ ConflictAnalyzerWithWatchedLits::ConflictAnalyzerWithWatchedLits(
     int n_var,
-    const CUDAClauseVec* formula,
-    VariablesStateHandler* handler,
+    const CUDAClauseVec *formula,
+    VariablesStateHandler *handler,
     bool use_implication_graph,
     int max_implication_per_var,
-    DecisionMaker* dec_maker,
-    RuntimeStatistics* stats,
-    watched_clause_node_t* node_repository
+    DecisionMaker *dec_maker,
+    RuntimeStatistics *stats,
+    watched_clause_node_t *node_repository
     /*,GPUVec <WatchedClause> & watched_clauses_repository*/)
     : ConflictAnalyzer(n_var, formula, handler, use_implication_graph,
-          max_implication_per_var,
-          dec_maker,
-          stats)
+                       max_implication_per_var,
+                       dec_maker,
+                       stats)
 
     , watched_clauses(n_var, handler,
-          node_repository,
-          // &watched_clauses_repository,
-          (formula != nullptr) ? formula->size_of() : 0)
+                      node_repository,
+                      // &watched_clauses_repository,
+                      formula->size_of())
 {
-    // Add assertions at the very beginning of the constructor body
-    assert(handler != nullptr && "ConflictAnalyzerWithWatchedLits: handler pointer is NULL");
-    assert(node_repository != nullptr && "ConflictAnalyzerWithWatchedLits: node_repository pointer is NULL");
-    // Check formula pointer and its size if not null (as used in watched_clauses initializer)
-    if (formula != nullptr) {
-        assert(formula->size_of() >= 0 && "ConflictAnalyzerWithWatchedLits: formula->size_of() is negative");
-    }
-    // We can also assert n_var is reasonable if needed, e.g., assert(n_var >= 0);
-
-    // Add debug info and null checks to identify the problem
-    if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
-        printf("ConflictAnalyzerWithWatchedLits constructor - Thread (%d,%d,%d), Block (%d,%d,%d)\n",
-            threadIdx.x, threadIdx.y, threadIdx.z,
-            blockIdx.x, blockIdx.y, blockIdx.z);
-        printf("  formula ptr: %p\n", formula);
-        printf("  handler ptr: %p\n", handler);
-        printf("  node_repository ptr: %p\n", node_repository);
-    }
-
-    // Validate pointers before using them
-    if (formula == nullptr) {
-        printf("ERROR in ConflictAnalyzerWithWatchedLits: formula is NULL! Thread (%d,%d,%d), Block (%d,%d,%d)\n",
-            threadIdx.x, threadIdx.y, threadIdx.z,
-            blockIdx.x, blockIdx.y, blockIdx.z);
-        return;
-    }
-
-    if (node_repository == nullptr) {
-        printf("ERROR in ConflictAnalyzerWithWatchedLits: node_repository is NULL! Thread (%d,%d,%d), Block (%d,%d,%d)\n",
-            threadIdx.x, threadIdx.y, threadIdx.z,
-            blockIdx.x, blockIdx.y, blockIdx.z);
-        return;
-    }
-
     backtracker.set_watched_clauses(&watched_clauses);
     watched_clauses.add_all_clauses(*formula);
 
@@ -80,9 +44,9 @@ __device__ sat_status ConflictAnalyzerWithWatchedLits::propagate(Decision d)
 }
 
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
-__device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUVec<Lit>* assumptions)
+    __device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUVec<Lit> *assumptions)
 #else
-__device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUStaticVec<Lit>* assumptions)
+    __device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUStaticVec<Lit> *assumptions)
 #endif
 {
     stats->signal_pre_proc_handle_assumptions_start();
@@ -97,14 +61,15 @@ __device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUStatic
 
         sat_status current_status = vars_handler->literal_status(d.literal);
 
-        const Clause* conflicting;
+        const Clause *conflicting;
         sat_status status = watched_clauses.new_decision(d, &conflicting,
-            new_implications);
+                            new_implications);
 
         if (status != sat_status::UNDEF) {
             stats->signal_pre_proc_handle_assumptions_stop();
             return status;
         }
+
     }
 
     stats->signal_pre_proc_handle_assumptions_stop();
@@ -118,15 +83,17 @@ __device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUStatic
             d.implicated_from_formula = false;
             graph.set(d);
         }
-        GPULinkedList<found_implication>::LinkedListIterator iter = new_implications.get_iterator();
+        GPULinkedList<found_implication>::LinkedListIterator iter =
+            new_implications.get_iterator();
 
         while (iter.has_next()) {
             found_implication impl = iter.get_next();
             ConflictAnalyzer::add_implication(impl.implication,
-                impl.implicating_clause);
+                                              impl.implicating_clause);
         }
 
-    } else {
+    }
+    else {
         vars_handler->add_many_implications(new_implications);
     }
 
@@ -144,27 +111,30 @@ __device__ sat_status ConflictAnalyzerWithWatchedLits::set_assumptions(GPUStatic
 }
 
 __device__ sat_status ConflictAnalyzerWithWatchedLits::propagate_all_clauses(Decision d,
-    const Clause** conflicting_clause)
+        const Clause **conflicting_clause)
 {
     GPULinkedList<found_implication> new_implications;
     sat_status stat = watched_clauses.new_decision(d, conflicting_clause,
-        new_implications);
+                      new_implications);
 
-    GPULinkedList<found_implication>::LinkedListIterator iter = new_implications.get_iterator();
+    GPULinkedList<found_implication>::LinkedListIterator iter =
+        new_implications.get_iterator();
+
 
     if (use_implication_graph) {
         while (iter.has_next()) {
             found_implication impl = iter.get_next();
             ConflictAnalyzer::add_implication(impl.implication,
-                impl.implicating_clause);
+                                              impl.implicating_clause);
         }
-    } else {
+    }
+    else {
         vars_handler->add_many_implications(new_implications);
     }
 
     new_implications.unalloc();
 
-    // watched_clauses.print_structure();
+    //watched_clauses.print_structure();
     return stat;
 }
 
