@@ -4,15 +4,16 @@
 #include <assert.h>
 #include <vector>
 
-#include "SATSolver/Configs.cuh"
 #include "SATSolver/SolverTypes.cuh"
+#include "SATSolver/Configs.cuh"
 
-class CUDAClauseVec {
+class CUDAClauseVec
+{
 
 private:
     size_t capacity;
     size_t size = 0;
-    Clause* clauses_dev;
+    Clause *clauses_dev;
 
 public:
     __host__ CUDAClauseVec(size_t capacity);
@@ -24,9 +25,7 @@ public:
     __host__ __device__ void print_all();
 
     __device__ bool remove(size_t pos);
-    __device__ const Clause* get_ptr(size_t pos) const { return &clauses_dev[pos]; }
-    // Add a host/device getter for the raw device pointer
-    __host__ __device__ const Clause* get_device_ptr() const { return clauses_dev; }
+    __device__ const Clause *get_ptr(size_t pos) const { return &clauses_dev[pos]; }
 
     /**
      * Allocate one continuous space in the device to store all clauses in vec and
