@@ -96,7 +96,7 @@ public:
                           * Variables to be ignored (specially if they are already solved).
                           * Should not be contained on the assumptions.
                           */
-                         const GPUVec<Var> *dead_vars,
+                         const GPUVecView<Var> *dead_vars,
                          RuntimeStatistics *statistics,
                          watched_clause_node_t *node_repository
                          //,GPUVec<WatchedClause> & watched_clauses

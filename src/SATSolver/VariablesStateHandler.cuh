@@ -43,7 +43,7 @@ public:
 
 
     __device__ VariablesStateHandler(int n_vars,
-                                     const GPUVec<Var> *dead_vars,
+                                     const GPUVecView<Var> *dead_vars,
                                      DecisionMaker *dec_maker);
 
     __device__ void set_assumptions(

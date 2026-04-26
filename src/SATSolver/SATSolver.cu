@@ -1,7 +1,7 @@
 #include "SATSolver.cuh"
 
 __device__ SATSolver::SATSolver(const CUDAClauseVec *formula, int n_vars, int max_implication_per_var,
-    const GPUVec<Var> *dead_vars, RuntimeStatistics *statistics, watched_clause_node_t *node_repository
+    const GPUVecView<Var> *dead_vars, RuntimeStatistics *statistics, watched_clause_node_t *node_repository
     /*, GPUVec<WatchedClause> & watched_clauses*/)
 
     : decision_maker(formula, n_vars)

@@ -28,7 +28,7 @@ public:
         unsigned *completed_jobs;
     };
 
-    DataToDevice(CUDAClauseVec const& clauses_database, GPUVec<Var> const& dead_vars,
+    DataToDevice(CUDAClauseVec const& clauses_database, GPUVecView<Var> const& dead_vars,
         RuntimeStatistics const& statistics, numbers const&, atomics const&);
 
     //    DataToDevice(FormulaData data, int n_jobs, int n_blocks,
@@ -55,8 +55,8 @@ public:
     __device__ const CUDAClauseVec *get_clauses_db_dptr() { return d_clauses_db; }
     __host__ __device__ int get_n_vars();
     __host__ __device__ int get_max_implication_per_var();
-    __host__ __device__ GPUVec<Var> *get_dead_vars_ptr();
-    __host__ __device__ GPUVec<Var> get_dead_vars();
+    __host__ __device__ GPUVecView<Var> *get_dead_vars_ptr();
+    __host__ __device__ GPUVecView<Var> get_dead_vars();
 
     __host__ __device__ RuntimeStatistics& get_statistics();
     __host__ __device__ RuntimeStatistics *get_statistics_ptr();
@@ -84,7 +84,7 @@ private:
 
     Results results;
     int max_implication_per_var;
-    GPUVec<Var> dead_vars;
+    GPUVecView<Var> dead_vars;
     int n_thread;
     int n_blocks;
 

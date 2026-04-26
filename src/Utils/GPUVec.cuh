@@ -2,9 +2,147 @@
 #define __GPUVEC_CUH__
 
 #include "SATSolver/SolverTypes.cuh"
+#include "ErrorHandler/CudaMemoryErrorHandler.cuh"
 #include <assert.h>
 #include <memory.h>
 #include <string>
+#include <vector>
+
+// Non-owning vector view over a pre-allocated buffer. Usable on host and device.
+// The owning host-side counterpart is GPUVecStorage<T>.
+template<class T>
+class GPUVecView
+{
+private:
+    T *elements_ = nullptr;
+    size_t capacity_ = 0;
+    size_t size_ = 0;
+
+public:
+    __host__ __device__ GPUVecView() = default;
+    __host__ __device__ GPUVecView(T *elements, size_t capacity, size_t size = 0)
+        : elements_{elements}, capacity_{capacity}, size_{size} {}
+
+    __host__ __device__ size_t capacity() const { return capacity_; }
+    __host__ __device__ size_t size_of() const { return size_; }
+    __host__ __device__ bool empty() const { return size_ == 0; }
+    __host__ __device__ bool full() const { return size_ == capacity_; }
+    __host__ __device__ T *raw() const { return elements_; }
+
+    __device__ bool add(const T& v)
+    {
+        if (size_ >= capacity_) return false;
+        elements_[size_++] = v;
+        return true;
+    }
+
+    __device__ T get(size_t pos) const { return elements_[pos]; }
+    __device__ T *get_ptr(size_t pos) const { return &elements_[pos]; }
+    __device__ T last() const { return elements_[size_ - 1]; }
+
+    __device__ bool remove(size_t pos)
+    {
+        if (pos >= size_) return false;
+        for (size_t i = pos; i < size_ - 1; ++i) elements_[i] = elements_[i + 1];
+        size_--;
+        return true;
+    }
+
+    __device__ bool remove_obj(const T& element)
+    {
+        for (size_t i = 0; i < size_; ++i) {
+            if (elements_[i] == element) { remove(i); return true; }
+        }
+        return false;
+    }
+
+    __device__ bool contains(const T& element) const
+    {
+        for (size_t i = 0; i < size_; ++i) {
+            if (elements_[i] == element) return true;
+        }
+        return false;
+    }
+
+    __device__ void clear() { size_ = 0; }
+
+    __device__ void remove_n_last(size_t n) { size_ = (size_ >= n) ? size_ - n : 0; }
+
+    __device__ T reset(T element, size_t pos)
+    {
+        T old = elements_[pos];
+        elements_[pos] = element;
+        return old;
+    }
+
+    __device__ void copy_to(GPUVecView<T> dst) const
+    {
+        for (size_t i = 0; i < size_; ++i) dst.add(elements_[i]);
+    }
+
+    __host__ std::vector<T> copy_to_host() const
+    {
+        std::vector<T> dest(size_);
+        if (size_ > 0) {
+            check(cudaMemcpy(dest.data(), elements_, size_ * sizeof(T), cudaMemcpyDeviceToHost),
+                  "GPUVecView::copy_to_host");
+        }
+        return dest;
+    }
+};
+
+// Host-only owner of a cudaMalloc'd buffer. RAII; non-copyable, move-only.
+// Use .view() to obtain a non-owning GPUVecView<T> for device or downstream code.
+template<class T>
+class GPUVecStorage
+{
+private:
+    T *elements_ = nullptr;
+    size_t capacity_ = 0;
+    size_t size_ = 0;
+
+public:
+    GPUVecStorage() = default;
+    explicit GPUVecStorage(size_t capacity) : capacity_{capacity}
+    {
+        if (capacity_ > 0) {
+            check(cudaMalloc(&elements_, capacity_ * sizeof(T)), "GPUVecStorage::cudaMalloc");
+        }
+    }
+    GPUVecStorage(const GPUVecStorage&) = delete;
+    GPUVecStorage& operator=(const GPUVecStorage&) = delete;
+    GPUVecStorage(GPUVecStorage&& o) noexcept
+        : elements_{o.elements_}, capacity_{o.capacity_}, size_{o.size_}
+    {
+        o.elements_ = nullptr; o.capacity_ = 0; o.size_ = 0;
+    }
+    GPUVecStorage& operator=(GPUVecStorage&& o) noexcept
+    {
+        if (this != &o) {
+            if (elements_) cudaFree(elements_);
+            elements_ = o.elements_; capacity_ = o.capacity_; size_ = o.size_;
+            o.elements_ = nullptr; o.capacity_ = 0; o.size_ = 0;
+        }
+        return *this;
+    }
+    ~GPUVecStorage() { if (elements_) cudaFree(elements_); }
+
+    bool add(const T& value)
+    {
+        if (size_ >= capacity_) return false;
+        check(cudaMemcpy(elements_ + size_, &value, sizeof(T), cudaMemcpyHostToDevice),
+              "GPUVecStorage::add");
+        size_++;
+        return true;
+    }
+
+    size_t size_of() const { return size_; }
+    size_t capacity() const { return capacity_; }
+    T *raw() const { return elements_; }
+
+    GPUVecView<T> view() const { return GPUVecView<T>(elements_, capacity_, size_); }
+    operator GPUVecView<T>() const { return view(); }
+};
 
 template<class T>
 class GPUVec

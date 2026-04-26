@@ -8,7 +8,7 @@ DataToDevice::DataToDevice(FormulaData data, int n_jobs, int n_blocks,
 {
 }
 */
-DataToDevice::DataToDevice(CUDAClauseVec const& clauses_database, GPUVec<Var> const& dead_vars,
+DataToDevice::DataToDevice(CUDAClauseVec const& clauses_database, GPUVecView<Var> const& dead_vars,
     RuntimeStatistics const& st, numbers const& n, atomics const& counters)
     : clauses_db(clauses_database)
     , statistics(st)
@@ -104,9 +104,9 @@ __host__ __device__ int DataToDevice::get_n_vars() { return n_vars; }
 
 __host__ __device__ int DataToDevice::get_max_implication_per_var() { return max_implication_per_var; }
 
-__host__ __device__ GPUVec<Var> *DataToDevice::get_dead_vars_ptr() { return &dead_vars; }
+__host__ __device__ GPUVecView<Var> *DataToDevice::get_dead_vars_ptr() { return &dead_vars; }
 
-__host__ __device__ GPUVec<Var> DataToDevice::get_dead_vars() { return dead_vars; }
+__host__ __device__ GPUVecView<Var> DataToDevice::get_dead_vars() { return dead_vars; }
 
 __host__ __device__ RuntimeStatistics& DataToDevice::get_statistics() { return statistics; }
 

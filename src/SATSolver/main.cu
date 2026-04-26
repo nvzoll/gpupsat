@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     }
 
     std::vector<Lit> const& solved_lits = fdata.get_solved_literals();
-    GPUVec<Var> dead_vars_dev(solved_lits.size());
+    GPUVecStorage<Var> dead_vars_dev(solved_lits.size());
     std::vector<Var> dead_vars_host;
 
     for (Lit lit : solved_lits) {
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
         DataToDevice::numbers n = { n_vars, n_clauses, 0, 1, 1, max_implication_per_var };
 
         DataToDevice data(
-            formula, dead_vars_dev, RuntimeStatistics(n.blocks, n.threads, nullptr), n, DataToDevice::atomics());
+            formula, dead_vars_dev.view(), RuntimeStatistics(n.blocks, n.threads, nullptr), n, DataToDevice::atomics());
 
         data.prepare_sequencial();
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 
         RuntimeStatistics stat(n.blocks, n.threads, atomics.completed_jobs);
 
-        DataToDevice data(formula, dead_vars_dev, stat, n, atomics);
+        DataToDevice data(formula, dead_vars_dev.view(), stat, n, atomics);
         data.prepare_parallel(*dynamic_cast<JobChooser *>(&chooser)
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
                                   ,

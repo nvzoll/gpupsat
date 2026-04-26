@@ -3,7 +3,7 @@
 
 __device__ VariablesStateHandler::VariablesStateHandler(
         int n_vars,
-        const GPUVec<Var> *dead_vars,
+        const GPUVecView<Var> *dead_vars,
         DecisionMaker *dec_maker)
     : free_vars(n_vars)
     , decisions(n_vars)
