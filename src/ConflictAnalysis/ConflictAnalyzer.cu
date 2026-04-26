@@ -498,7 +498,7 @@ __device__ bool ConflictAnalyzer::check_solver_consistency()
     for (int i = 0; i < vars_handler->n_decisions(); i++) {
         if (vars_handler->get_decision(i).decision_level < 0
             || vars_handler->get_decision(i).decision_level > vars_handler->get_decision_level()) {
-            printf("Decision level (%d) of decision ");
+            printf("Decision level (%d) of decision ", vars_handler->get_decision(i).decision_level);
             print_lit(vars_handler->get_decision(i).literal);
             printf(" is invalid!\n");
             return false;
@@ -513,7 +513,7 @@ __device__ bool ConflictAnalyzer::check_solver_consistency()
     for (int i = 0; i < vars_handler->n_implications(); i++) {
         if (vars_handler->get_implication(i)->decision_level < 0
             || vars_handler->get_implication(i)->decision_level > vars_handler->get_decision_level()) {
-            printf("Decision level (%d) of implication ");
+            printf("Decision level (%d) of implication ", vars_handler->get_implication(i)->decision_level);
             print_lit(vars_handler->get_implication(i)->literal);
             printf(" is invalid!\n");
             return false;

@@ -132,13 +132,13 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     save_ctx(ctx, &storage);
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
-        printf("sizeof(KernelContext)=0x%x\n", sizeof(KernelContext));
+        printf("sizeof(KernelContext)=0x%zx\n", sizeof(KernelContext));
     }
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
         printf("Block: %d, thread: %d, index: %d\n", blockIdx.x, threadIdx.x, index);
-        printf("Largest job is : %d\n", ctx->queue->largest_job_size());
-        printf("Number of literals: %d\n", ctx->job.n_literals);
+        printf("Largest job is : %zu\n", ctx->queue->largest_job_size());
+        printf("Number of literals: %zu\n", ctx->job.n_literals);
     }
 }
 
@@ -184,7 +184,7 @@ __global__ void parallel_kernel(KernelContextStorage storage, int *state)
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
         printf("Thread of index %d is running job: ", index);
         print_job(ctx->job);
-        printf("Job has %d literals", ctx->job.n_literals);
+        printf("Job has %zu literals", ctx->job.n_literals);
         printf("\n");
     }
 

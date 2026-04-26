@@ -58,7 +58,7 @@ __host__ __device__ void CUDAClauseVec::print_all()
     print_dev <<< 1, 1>>>(*this);
     //cudaDeviceReset();
 #else
-    printf("This vector contains %d %s:\n", size, size == 1 ? "clause" : "clauses");
+    printf("This vector contains %zu %s:\n", size, size == 1 ? "clause" : "clauses");
 
     for (int i = 0; i < size; i++) {
         print_clause(clauses_dev[i]);

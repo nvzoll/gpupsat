@@ -403,7 +403,7 @@ __device__ bool WatchedClausesList::ClauseListStructure::check_consistency()
     }
 
     if (((clauses_count / 2) + blocked_clauses.size()) != n_added_clauses) {
-        printf("By counting (removing duplicates), %d clauses were found,"
+        printf("By counting (removing duplicates), %zu clauses were found,"
                " while %d where added in the first place\n",
                (clauses_count / 2) + blocked_clauses.size(),
                n_added_clauses
