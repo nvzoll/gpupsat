@@ -24,8 +24,8 @@ __host__ void free_kernel_contexts(KernelContextStorage *storage);
 
 __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage);
 __global__ void parallel_kernel(KernelContextStorage, int *state);
-__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage);
+__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage, Lit *res_buf);
 
-__global__ void run_sequential(DataToDevice data, int *state);
+__global__ void run_sequential(DataToDevice data, int *state, Lit *res_buf);
 
 #endif /* __PARALLELIZER_CUH__ */

@@ -204,8 +204,11 @@ int main(int argc, char *argv[])
 
         data.prepare_sequencial();
 
+        Lit *res_buf;
+        check(cudaMalloc(&res_buf, n_vars * sizeof(Lit)), "Allocate sequential results buffer");
+
         stopwatch.start();
-        run_sequential<<<1, 1>>>(data, state_ptr);
+        run_sequential<<<1, 1>>>(data, state_ptr, res_buf);
         elapsedTime = stopwatch.stop();
 
         results = data.get_results_ptr();
@@ -273,7 +276,11 @@ int main(int argc, char *argv[])
 
         DataToDevice *winner = data_host_ptr;
 
-        parallel_kernel_retrieve_results<<<n_blocks, n_threads>>>(*winner, thread_contexts);
+        Lit *res_buf;
+        size_t res_buf_sz = static_cast<size_t>(n_blocks) * n_threads * n_vars * sizeof(Lit);
+        check(cudaMalloc(&res_buf, res_buf_sz), "Allocate parallel results buffer");
+
+        parallel_kernel_retrieve_results<<<n_blocks, n_threads>>>(*winner, thread_contexts, res_buf);
 
         results = winner->get_results_ptr();
 

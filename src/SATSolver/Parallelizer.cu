@@ -148,7 +148,7 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     }
 }
 
-__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage storage)
+__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage storage, Lit *res_buf)
 {
     KernelContext *ctx = get_ctx(&storage);
     RuntimeStatistics *st = ctx->st;
@@ -157,13 +157,11 @@ __global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContex
 
     if (ctx->status == sat_status::SAT) {
         size_t results_size = ctx->solver.get_results_size();
-        Lit *content = new Lit[results_size];
+        Lit *content = &res_buf[get_thread_id() * data.get_n_vars()];
         ctx->solver.get_results(content);
 
         Results *results = data.get_results_ptr();
         results->set_satisfiable_results(content, results_size);
-
-        delete[] content;
     }
 
     if (ctx->status == sat_status::UNDEF) {
@@ -226,7 +224,7 @@ __global__ void parallel_kernel(KernelContextStorage storage, int *state)
     }
 }
 
-__global__ void run_sequential(DataToDevice data, int *state)
+__global__ void run_sequential(DataToDevice data, int *state, Lit *res_buf)
 {
     RuntimeStatistics *st = data.get_statistics_ptr();
     st->signal_create_structures_start();
@@ -242,20 +240,16 @@ __global__ void run_sequential(DataToDevice data, int *state)
 
     Results results = data.get_results();
 
-    // GPUVec <WatchedClause> watched_clauses = data.get_watched_clauses(0);
-
-    SATSolver *solver = new SATSolver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
-        st, data.get_nodes_repository_ptr()
-        //, watched_clauses
-    );
+    SATSolver solver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
+        st, data.get_nodes_repository_ptr());
 
     st->signal_create_structures_stop();
     st->signal_job_start();
 
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
-    sat_status status = solver->solve(&assumptions);
+    sat_status status = solver.solve(&assumptions);
 #else
-    sat_status status = solver->solve();
+    sat_status status = solver.solve();
 #endif
 
     st->signal_job_stop();
@@ -263,17 +257,9 @@ __global__ void run_sequential(DataToDevice data, int *state)
     st->signal_process_results_start();
 
     if (status == sat_status::SAT) {
-        int results_size = solver->get_results_size();
-        Lit *the_results = new Lit[results_size];
-        solver->get_results(the_results);
-
-        results.set_satisfiable_results(the_results, results_size);
-
-        delete[] the_results;
-    }
-
-    if (status == sat_status::UNSAT) {
-        // do nothing!
+        int results_size = solver.get_results_size();
+        solver.get_results(res_buf);
+        results.set_satisfiable_results(res_buf, results_size);
     }
 
     if (status == sat_status::UNDEF) {
@@ -283,6 +269,4 @@ __global__ void run_sequential(DataToDevice data, int *state)
     st->signal_process_results_stop();
 
     *state = get_thread_id();
-
-    delete solver;
 }
