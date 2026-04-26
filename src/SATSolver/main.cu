@@ -178,18 +178,15 @@ int main(int argc, char *argv[])
 
     Results *results;
 
-    int *state_host_ptr;
-    int *state_dev_ptr;
+    int *state_ptr;
     DataToDevice *data_host_ptr;
     DataToDevice *data_dev_ptr;
 
-    check(cudaHostAlloc(&state_host_ptr, sizeof(int), cudaHostAllocMapped), "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&state_dev_ptr, state_host_ptr, 0), "Retrieve state dev_ptr");
-
-    check(cudaHostAlloc(&data_host_ptr, (sizeof(DataToDevice) * n_blocks * n_threads), cudaHostAllocMapped),
-        "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0), "Retrieve state dev_ptr");
-    *state_host_ptr = INT_MAX;
+    check(cudaMallocManaged(&state_ptr, sizeof(int)), "Alloc managed state");
+    check(cudaHostAlloc(&data_host_ptr, sizeof(DataToDevice) * n_blocks * n_threads, cudaHostAllocMapped),
+        "Alloc pinned DataToDevice");
+    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0), "Retrieve data dev_ptr");
+    *state_ptr = INT_MAX;
 
     check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT), "Set stack limit");
     check(cudaDeviceSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
@@ -208,7 +205,7 @@ int main(int argc, char *argv[])
         data.prepare_sequencial();
 
         stopwatch.start();
-        run_sequential<<<1, 1>>>(data, state_dev_ptr);
+        run_sequential<<<1, 1>>>(data, state_ptr);
         elapsedTime = stopwatch.stop();
 
         results = data.get_results_ptr();
@@ -256,12 +253,12 @@ int main(int argc, char *argv[])
         size_t call = 1;
         while (true) {
             stopwatch.start();
-            parallel_kernel<<<n_blocks, n_threads>>>(thread_contexts, state_dev_ptr);
+            parallel_kernel<<<n_blocks, n_threads>>>(thread_contexts, state_ptr);
             elapsedTime += stopwatch.stop();
 
             call++;
 
-            if (*state_host_ptr != INT_MAX || call == SIZE_MAX) {
+            if (*state_ptr != INT_MAX || call == SIZE_MAX) {
                 break;
             }
         }
