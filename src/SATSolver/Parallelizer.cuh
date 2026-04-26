@@ -1,15 +1,15 @@
 #ifndef __PARALLELIZER_CUH__
 #define __PARALLELIZER_CUH__
 
-#include "Utils/CUDAClauseVec.cuh"
+#include "Configs.cuh"
+#include "DataToDevice.cuh"
+#include "JobsQueue.cuh"
+#include "Results.cuh"
 #include "SATSolver.cuh"
 #include "SolverTypes.cuh"
-#include "JobsQueue.cuh"
-#include "Configs.cuh"
-#include "Utils/GPUStaticVec.cuh"
 #include "Statistics/RuntimeStatistics.cuh"
-#include "Results.cuh"
-#include "DataToDevice.cuh"
+#include "Utils/CUDAClauseVec.cuh"
+#include "Utils/GPUStaticVec.cuh"
 
 struct KernelContextStorage {
     void **data;
@@ -21,6 +21,5 @@ __global__ void parallel_kernel(KernelContextStorage, int *state);
 __global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage);
 
 __global__ void run_sequential(DataToDevice data, int *state);
-
 
 #endif /* __PARALLELIZER_CUH__ */
