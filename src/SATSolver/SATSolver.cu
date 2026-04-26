@@ -110,9 +110,6 @@ __device__ sat_status SATSolver::solve(
 
     int n_iterations = 0;
 
-#ifdef USE_ASSERTIONS
-    assert(!vars_handler.no_free_vars());
-#endif
 
 #ifdef IMPLICATION_GRAPH_DEBUG
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {

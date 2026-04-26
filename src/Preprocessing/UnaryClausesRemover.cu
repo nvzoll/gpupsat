@@ -88,9 +88,6 @@ sat_status UnaryClausesRemover::process_clause(
 
     }
 
-#ifdef USE_ASSERTIONS
-    assert(unsat_lits >= 0 && unsat_lits <= c.n_lits);
-#endif
 
     if (unsat_lits != c.n_lits - 1) {
         unit_lit.x = -1;
@@ -105,9 +102,6 @@ void UnaryClausesRemover::clean_clause(std::vector<Lit>& implied_lits, Clause& c
     for (size_t i = 0; i < c.n_lits; i++) {
         Lit clause_current = c.literals[i];
         for (Lit lit : implied_lits) {
-#ifdef USE_ASSERTIONS
-            assert(!(clause_current == lit));
-#endif
             if (clause_current == ~lit) {
                 remove_literal(c, i);
                 i--;
@@ -176,9 +170,6 @@ void UnaryClausesRemover::process()
         current_num_lit = solved_literals.size();
     }
 
-#ifdef USE_ASSERTIONS
-    assert(test_results());
-#endif
 }
 
 sat_status UnaryClausesRemover::get_status()

@@ -36,9 +36,6 @@ __device__ void Results::set_satisfiable_results(Lit *the_results, int size)
         Lit l = the_results[i];
         int index = var(l);
 
-#ifdef USE_ASSERTIONS
-        assert(index >= 0);
-#endif
 
         sat_status res_sign = sign(l) ? sat_status::SAT : sat_status::UNSAT;
 

@@ -79,9 +79,6 @@ public:
 
     __device__ D get(int pos)
     {
-#ifdef USE_ASSERTIONS
-        assert(pos >= 0 && pos < size);
-#endif
 
         return elements[pos];
     }
@@ -139,9 +136,6 @@ public:
     */
     __host__ __device__ D reset(D element, int pos)
     {
-#ifdef USE_ASSERTIONS
-        assert(pos < size && pos >= 0);
-#endif
         D old = elements[pos];
         elements[pos] = element;
         return old;

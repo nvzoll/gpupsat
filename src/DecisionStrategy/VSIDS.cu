@@ -66,17 +66,11 @@ __device__ void VSIDS::increment(Lit literal)
 
 __device__ void VSIDS::free_var(Var v)
 {
-#ifdef USE_ASSERTIONS
-    assert(v >= 0 && v < n_vars);
-#endif
     vars[v].free = true;
 }
 
 __device__ void VSIDS::block_var(Var v)
 {
-#ifdef USE_ASSERTIONS
-    assert(v >= 0 && v < n_vars);
-#endif
     vars[v].free = false;
 }
 
@@ -125,9 +119,6 @@ __device__ Lit VSIDS::next_higher_literal()
         }
 
     }
-#ifdef USE_ASSERTIONS
-    assert(higher.x >= 0);
-#endif
 
     return higher;
 }

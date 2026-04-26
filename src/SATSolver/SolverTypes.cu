@@ -75,9 +75,6 @@ __device__ void create_clause_on_dev(int capacity, Clause& c)
 
 __host__ __device__ void addLitToDev(Lit l, Clause& c)
 {
-#ifdef USE_ASSERTIONS
-    assert(c.n_lits < c.capacity);
-#endif
 
 #ifndef __CUDA_ARCH__
     check(cudaMemcpy((c.literals + c.n_lits), &l, sizeof(Lit), cudaMemcpyHostToDevice), "Memcpy");
@@ -90,9 +87,6 @@ __host__ __device__ void addLitToDev(Lit l, Clause& c)
 
 void addLitToHost(Lit l, Clause& c)
 {
-#ifdef USE_ASSERTIONS
-    assert(c.n_lits < c.capacity);
-#endif
 
     memcpy((c.literals + c.n_lits), &l, sizeof(Lit));
 
@@ -101,9 +95,6 @@ void addLitToHost(Lit l, Clause& c)
 
 void remove_literal(Clause& c, size_t pos)
 {
-#ifdef USE_ASSERTIONS
-    assert(pos >= 0 && pos < c.n_lits);
-#endif
 
     for (size_t i = pos; i < c.n_lits - 1; i++) {
         c.literals[i] = c.literals[i + 1];

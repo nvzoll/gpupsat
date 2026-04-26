@@ -68,10 +68,6 @@ __device__ Decision DecisionMaker::new_decision()
 __device__ Decision DecisionMaker::decide()
 {
 
-#ifdef USE_ASSERTIONS
-    assert(vars_handler->get_decision_level() >= 0);
-    assert(!vars_handler->no_free_vars());
-#endif
 
     Decision d =  new_decision();
 #if defined(DEBUG) || defined(IMPLICATION_GRAPH_DEBUG)

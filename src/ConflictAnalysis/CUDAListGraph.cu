@@ -8,9 +8,6 @@ __host__ __device__ CUDAListGraph::CUDAListGraph(int vertices_capacity, int ed_c
 
 __device__ void CUDAListGraph::set(Decision d)
 {
-#ifdef USE_ASSERTIONS
-    assert(!structure.contains(d));
-#endif
     structure.add(d);
 
 }
@@ -22,9 +19,6 @@ __device__ bool CUDAListGraph::is_set(Var var)
 
 __device__ Decision CUDAListGraph::get(int index)
 {
-#ifdef USE_ASSERTIONS
-    assert(index < structure.vertices_capacity);
-#endif
     return structure.vertices[index].decision;
 }
 
@@ -68,26 +62,7 @@ __device__ void CUDAListGraph::link(Var src, Var dest, const Clause *implicating
 {
     int src_index = src;
     int dest_index = dest;
-#ifdef USE_ASSERTIONS
-
-    if (structure.linked(src, dest)) {
-        printf("Attempting to link two vertices that are already linked.\n");
-        //print();
-        assert(false);
-    }
-
-    //assert(structure.vertices[src_index].set && structure.vertices[dest_index].set);
-    if (!(structure.vertices[src_index].set && structure.vertices[dest_index].set)) {
-        printf("assert(structure.vertices[%d].set && structure.vertices[%d].set);", src_index, dest_index);
-        printf(" = %s && %s\n", structure.vertices[src_index].set ? "T" : "F",
-               structure.vertices[dest_index].set ? "T" : "F");
-        assert(false);
-    }
-#endif
 #ifdef INCLUDE_FORWARD_EDGES
-#ifdef USE_ASSERTIONS
-    assert(structure.vertices[src_index].n_neighbors < structure.edges_capacity);
-#endif
 #endif
 
 
@@ -189,19 +164,6 @@ __device__ CUDAListGraph::Iterator CUDAListGraph::get_conflict_vertex_back_itera
 __device__ void CUDAListGraph::flag(int vertex_index)
 {
     Vertex *vertex = &(structure.vertices[vertex_index]);
-#ifdef USE_ASSERTIONS
-    if (!vertex->set) {
-        //print();
-        printf("Vertex %d is not set but is was called to be flagged.\n", vertex_index);
-        print_vertex(vertex_index);
-        printf("The list of vertices does %scontain the vertex %d, which is %s\n",
-               structure.vertices_indices.contains(vertex_index) ? "" : "not ", vertex_index,
-               structure.vertices[vertex_index].set ? "set" : "not set"    );
-        assert(check_consistency());
-
-        assert(false);
-    }
-#endif
 
     vertex->flagged = true;
 

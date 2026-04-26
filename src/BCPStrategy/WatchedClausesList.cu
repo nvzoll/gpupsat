@@ -82,10 +82,6 @@ __device__ sat_status WatchedClausesList::new_decision(Decision decision,
         implication_list.get_iterator(last_implications_size);
 
     for (int i = implications_count; i > 0; i--) {
-#ifdef USE_ASSERTIONS
-
-        assert(iter2.has_next());
-#endif
 
 
         found_implication impl = iter2.get_next();
@@ -115,10 +111,6 @@ __device__ bool WatchedClausesList::process_clause(WatchedClause *watched_clause
     Lit second_watched_literal = watched_clause->
                                  clause.literals[watched_clause->watched_lit_index_2];
 
-#ifdef USE_ASSERTIONS
-    assert(var(decision.literal) == var(first_watched_literal) ||
-           var(decision.literal) == var(second_watched_literal));
-#endif
 
     bool first_watched_consistent = is_currently_consistent(first_watched_literal, implication_list);
     bool second_watched_consistent = is_currently_consistent(second_watched_literal, implication_list);
@@ -341,9 +333,6 @@ __device__ void WatchedClausesList::new_clause(Clause clause,
         WatchedClause *watched_clause, Lit& lit, bool check_status)
 {
 
-#ifdef USE_ASSERTIONS
-    assert(clause.n_lits > 1);
-#endif
 
     watched_clause->clause = clause;
 

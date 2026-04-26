@@ -12,7 +12,6 @@
 #else
     #define DEBUG_SHOULD_PRINT(THREAD, BLOCK) (0)
 #endif
-// #define USE_ASSERTIONS
 /**
 * Solver's configurations:
 */
@@ -54,7 +53,7 @@
 //#define INCLUDE_FORWARD_EDGES
 #define MAX_NUMBER_OF_NODES 100000
 #define MIN_IMPLICATION_PER_VAR 100
-#define USE_CUDA_MALLOC_FOR_NODES
+// #define USE_CUDA_MALLOC_FOR_NODES
 
 /**
 * The conflict vertex is treated as a regular vertex by most methods.

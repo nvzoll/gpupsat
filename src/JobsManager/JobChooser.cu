@@ -58,9 +58,6 @@ void MaxClauseJobChooser::evaluate()
     var_chooser.evaluate();
 
     for (size_t i = 0; i < vars_per_job; i++) {
-#ifdef USE_ASSERTIONS
-        assert(var_chooser.has_next_var());
-#endif
 
         chosen_vars[i] = var_chooser.next_var();
     }
@@ -70,9 +67,6 @@ void MaxClauseJobChooser::evaluate()
 
 void MaxClauseJobChooser::getJobs(JobsQueue& queue)
 {
-#ifdef USE_ASSERTIONS
-    assert(evaluated);
-#endif
 
     m_fixed_lits.resize(vars_per_job);
     addJobs(m_fixed_lits.data(), 0, queue);
@@ -97,9 +91,6 @@ void MaxClauseJobChooser::addJobs(Lit *fixed_lits, size_t n_fixed_lits, JobsQueu
 
 size_t MaxClauseJobChooser::get_n_jobs()
 {
-#ifdef USE_ASSERTIONS
-    assert(evaluated);
-#endif
 
     return static_cast<size_t>(std::pow(2, static_cast<double>(vars_per_job)));
 }
@@ -126,9 +117,6 @@ void MaxClauseJobChooser::evalVarPerJobsDistribute()
     double expected = (n_threads * n_blocks) * JOBS_PER_THREAD;
     double max = std::pow(2, std::min<size_t>(std::max<size_t>((n_working_vars - MIN_FREE_VARS), 1), 62));
 
-#ifdef USE_ASSERTIONS
-    assert(max > 0);
-#endif
 
     expected = std::min(expected, max);
 

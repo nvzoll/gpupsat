@@ -77,9 +77,6 @@ __device__ size_t VariablesStateHandler::n_decisions()
 }
 __device__ Decision VariablesStateHandler::get_decision(size_t index)
 {
-#ifdef USE_ASSERTIONS
-    assert(index >= 0 && index < decisions.size_of());
-#endif
     return decisions.get(index);
 }
 __device__ size_t VariablesStateHandler::n_implications()
@@ -88,9 +85,6 @@ __device__ size_t VariablesStateHandler::n_implications()
 }
 __device__ Decision *VariablesStateHandler::get_implication(size_t index)
 {
-#ifdef USE_ASSERTIONS
-    assert(index >= 0 && index < implications.size_of());
-#endif
     return implications.get_ptr(index);
 }
 __device__ size_t VariablesStateHandler::n_assumptions()
@@ -99,9 +93,6 @@ __device__ size_t VariablesStateHandler::n_assumptions()
 }
 __device__ Lit VariablesStateHandler::get_assumption(size_t index)
 {
-#ifdef USE_ASSERTIONS
-    assert(index >= 0 && index < assumptions->size_of());
-#endif
     return assumptions->get(index);
 }
 
@@ -126,9 +117,6 @@ __device__ sat_status VariablesStateHandler::literal_status(Lit lit)
 
 __device__ sat_status VariablesStateHandler::literal_status(Lit lit, bool check_assumptions)
 {
-#ifdef USE_ASSERTIONS
-    assert(assumptions != nullptr);
-#endif
 
     if (check_assumptions) {
         sat_status stat = vars_status[var(lit)];
@@ -326,9 +314,6 @@ __device__ int VariablesStateHandler::n_consistent_literals(Clause *clause)
 __device__ void VariablesStateHandler::new_implication(Decision implication)
 {
 
-#ifdef USE_ASSERTIONS
-    assert(free_vars.contains(var(implication.literal)));
-#endif
     implications.add(implication);
     free_vars.remove_obj(var(implication.literal));
     block_var(var(implication.literal));
@@ -348,9 +333,6 @@ __device__ void VariablesStateHandler::add_many_implications(
 
 __device__ void VariablesStateHandler::new_decision(Decision decision)
 {
-#ifdef USE_ASSERTIONS
-    assert(free_vars.contains(var(decision.literal)));
-#endif
     decisions.add(decision);
     free_vars.remove_obj(var(decision.literal));
     block_var(var(decision.literal));
@@ -423,9 +405,6 @@ __device__ Decision VariablesStateHandler::backtrack_to(int new_decision_level)
  */
 __device__ Decision VariablesStateHandler::unmake_decision(int index_in_decisions)
 {
-#ifdef USE_ASSERTIONS
-    assert(index_in_decisions < decisions.size_of());
-#endif
     Decision d = decisions.get(index_in_decisions);
     //decisions.remove(index_in_decisions);
     //free_vars.add(var(d.literal));
@@ -487,15 +466,9 @@ __device__ bool VariablesStateHandler::is_var_free(Var v)
 
 __device__ void VariablesStateHandler::free_from_decisions(Decision decision)
 {
-#ifdef USE_ASSERTIONS
-    assert(decisions.contains(decision) && !(free_vars.contains(var(decision.literal))));
-#endif
 
     bool removed = decisions.remove_obj(decision);
 
-#ifdef USE_ASSERTIONS
-    assert(removed);
-#endif
 
     free_vars.add(var(decision.literal));
     free_var(var(decision.literal));
@@ -503,15 +476,9 @@ __device__ void VariablesStateHandler::free_from_decisions(Decision decision)
 }
 __device__ void VariablesStateHandler::free_from_implications(Decision implication)
 {
-#ifdef USE_ASSERTIONS
-    assert(implications.contains(implication) && !(free_vars.contains(var(implication.literal))));
-#endif
 
     bool removed = implications.remove_obj(implication);
 
-#ifdef USE_ASSERTIONS
-    assert(removed);
-#endif
 
     free_vars.add(var(implication.literal));
     free_var(var(implication.literal));

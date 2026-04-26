@@ -65,9 +65,6 @@ public:
         T *element = new T;
 
         //assert(element != nullptr);
-#ifdef USE_ASSERTIONS
-        assert(element != nullptr);
-#endif
 
         return element;
 

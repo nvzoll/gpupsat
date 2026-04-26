@@ -252,9 +252,6 @@ public:
 
     __host__ __device__ T get(size_t pos)
     {
-#ifdef USE_ASSERTIONS
-        assert(pos < size);
-#endif
 
 #ifndef __CUDA_ARCH__
         T *element = new T;
@@ -267,9 +264,6 @@ public:
 
     __host__ __device__ T *get_ptr(size_t pos) const
     {
-#ifdef USE_ASSERTIONS
-        assert(pos < size);
-#endif
 
 #ifndef __CUDA_ARCH__
         T *element = new T;
@@ -288,9 +282,6 @@ public:
      */
     __host__ __device__ T reset(T element, size_t pos)
     {
-#ifdef USE_ASSERTIONS
-        assert(pos < size);
-#endif
         T old = elements[pos];
         elements[pos] = element;
 

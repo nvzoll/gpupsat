@@ -58,9 +58,6 @@ void CnfManager::add_clause()
 
 void CnfManager::add_lit(Var v, bool sign)
 {
-#ifdef USE_ASSERTIONS
-    assert(current_clause_size < MAX_CLAUSE_SIZE - 1);
-#endif
 
     Lit l = mkLit(v, sign);
 

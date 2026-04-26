@@ -41,9 +41,6 @@ void VariableChooser::evaluate()
 
 Var VariableChooser::next_var()
 {
-#ifdef USE_ASSERTIONS
-    assert(evaluated && next_var_index >= 0);
-#endif
 
     Var v = next_var_iter->var;
     next_var_iter++;
@@ -53,9 +50,6 @@ Var VariableChooser::next_var()
 
 bool VariableChooser::has_next_var()
 {
-#ifdef USE_ASSERTIONS
-    assert(evaluated);
-#endif
 
     return next_var_iter != std::end(evaluations);
 }
