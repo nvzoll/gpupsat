@@ -4,10 +4,13 @@
 __device__ VariablesStateHandler::VariablesStateHandler(
         int n_vars,
         const GPUVecView<Var> *dead_vars,
-        DecisionMaker *dec_maker)
-    : free_vars(n_vars)
-    , decisions(n_vars)
-    , implications(n_vars)
+        DecisionMaker *dec_maker,
+        Var *free_vars_buf,
+        Decision *decisions_buf,
+        Decision *implications_buf)
+    : free_vars(free_vars_buf, n_vars, 0)
+    , decisions(decisions_buf, n_vars, 0)
+    , implications(implications_buf, n_vars, 0)
     , decision_maker { dec_maker }
     , n_vars { n_vars }
 {
@@ -357,7 +360,7 @@ __device__ void VariablesStateHandler::new_decision(Decision decision)
 
 
 __device__ void VariablesStateHandler::undo_decision_or_implication(int index,
-        GPUVec<Decision>& list)
+        GPUVecView<Decision>& list)
 {
     Decision dec = list.get(index);
 

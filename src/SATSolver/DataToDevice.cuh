@@ -68,6 +68,10 @@ public:
     __host__ __device__ watched_clause_node_t *get_nodes_repository_ptr();
     //__device__ GPUVec <WatchedClause> get_watched_clauses(int thread_block_index);
 
+    __host__ __device__ Var *get_free_vars_buffer(int thread_id);
+    __host__ __device__ Decision *get_decisions_buffer(int thread_id);
+    __host__ __device__ Decision *get_implications_buffer(int thread_id);
+
 private:
     CUDAClauseVec clauses_db;
     CUDAClauseVec *d_clauses_db;
@@ -90,6 +94,12 @@ private:
 
     // GPUVec< GPUVec < WatchedClause > > watched_clauses_per_thread;
     NodesRepository<GPULinkedList<WatchedClause *>::Node> nodes_repository;
+
+    // Per-thread arenas backing VariablesStateHandler's three vectors.
+    // Each thread gets a slice of n_vars Var/Decision elements.
+    Var *free_vars_arena;
+    Decision *decisions_arena;
+    Decision *implications_arena;
 };
 
 #endif /* __DATATODEVICE_CUH__ */

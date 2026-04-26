@@ -98,8 +98,10 @@ public:
                           */
                          const GPUVecView<Var> *dead_vars,
                          RuntimeStatistics *statistics,
-                         watched_clause_node_t *node_repository
-                         //,GPUVec<WatchedClause> & watched_clauses
+                         watched_clause_node_t *node_repository,
+                         Var *free_vars_buf,
+                         Decision *decisions_buf,
+                         Decision *implications_buf
                         );
 
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR

@@ -36,7 +36,10 @@ struct KernelContext {
 #endif
     , queue { data->get_jobs_queue_dptr() },
         solver(data->get_clauses_db_dptr(), data->get_n_vars(), data->get_max_implication_per_var(),
-            data->get_dead_vars_ptr(), st, data->get_nodes_repository_ptr()),
+            data->get_dead_vars_ptr(), st, data->get_nodes_repository_ptr(),
+            data->get_free_vars_buffer(get_thread_id()),
+            data->get_decisions_buffer(get_thread_id()),
+            data->get_implications_buffer(get_thread_id())),
         solved_jobs { 0 }, answer_ptr { data->get_found_answer_ptr() }
     // , watched_clauses { data.get_watched_clauses(index) }
     {
@@ -241,7 +244,10 @@ __global__ void run_sequential(DataToDevice data, int *state, Lit *res_buf)
     Results results = data.get_results();
 
     SATSolver solver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
-        st, data.get_nodes_repository_ptr());
+        st, data.get_nodes_repository_ptr(),
+        data.get_free_vars_buffer(0),
+        data.get_decisions_buffer(0),
+        data.get_implications_buffer(0));
 
     st->signal_create_structures_stop();
     st->signal_job_start();
