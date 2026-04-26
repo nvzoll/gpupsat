@@ -1,0 +1,8 @@
+c sat_5v_chain — 5 vars, 5 clauses, SAT
+c implication cycle: x1->x2->x3->x4->x5->x1; satisfied by all-true or all-false
+p cnf 5 5
+-1 2 0
+-2 3 0
+-3 4 0
+-4 5 0
+-5 1 0
