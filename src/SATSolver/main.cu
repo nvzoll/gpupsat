@@ -178,9 +178,9 @@ int main(int argc, char *argv[])
 
     Results *results;
 
-    int *state_ptr;
-    DataToDevice *data_host_ptr;
-    DataToDevice *data_dev_ptr;
+    int *state_ptr = nullptr;
+    DataToDevice *data_host_ptr = nullptr;
+    DataToDevice *data_dev_ptr = nullptr;
 
     check(cudaMallocManaged(&state_ptr, sizeof(int)), "Alloc managed state");
     check(cudaHostAlloc(&data_host_ptr, sizeof(DataToDevice) * n_blocks * n_threads, cudaHostAllocMapped),
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 
         data.prepare_sequencial();
 
-        Lit *res_buf;
+        Lit *res_buf = nullptr;
         check(cudaMalloc(&res_buf, n_vars * sizeof(Lit)), "Allocate sequential results buffer");
 
         stopwatch.start();
@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
         elapsedTime = stopwatch.stop();
 
         results = data.get_results_ptr();
+
+        cudaFree(res_buf);
     } else {
 #ifdef USE_SIMPLE_JOBS_GENERATION
         SimpleJobChooser chooser(n_vars, dead_vars_host);
@@ -276,7 +278,7 @@ int main(int argc, char *argv[])
 
         DataToDevice *winner = data_host_ptr;
 
-        Lit *res_buf;
+        Lit *res_buf = nullptr;
         size_t res_buf_sz = static_cast<size_t>(n_blocks) * n_threads * n_vars * sizeof(Lit);
         check(cudaMalloc(&res_buf, res_buf_sz), "Allocate parallel results buffer");
 
@@ -298,6 +300,13 @@ int main(int argc, char *argv[])
 
         // winner->get_statistics().print_function_time_statistics();
 #endif // ENABLE_STATISTICS
+
+        cudaFree(res_buf);
+        
+        cudaFree(atomics.next_job);
+        cudaFree(atomics.completed_jobs);
+
+        free_kernel_contexts(&thread_contexts);
     }
 
     printf("Total time on GPU: %f ms\n", elapsedTime);
@@ -310,6 +319,9 @@ int main(int argc, char *argv[])
         std::snprintf(buf, sizeof(buf), "%s,%d,%d,%f\n", pm.get_input_file(), n_threads, n_blocks, elapsedTime);
         out << buf;
     }
+
+    cudaFree(state_ptr);
+    cudaFree(data_host_ptr);
 
     cudaDeviceReset();
 
