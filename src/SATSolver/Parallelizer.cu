@@ -107,16 +107,24 @@ struct KernelContext {
     }
 };
 
-__device__ __forceinline__ KernelContext *get_ctx(KernelContextStorage *storage)
+__host__ void allocate_kernel_contexts(KernelContextStorage *storage, int n_blocks, int n_threads)
 {
-    KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
-    return row[threadIdx.x];
+    size_t total = static_cast<size_t>(n_blocks) * n_threads * sizeof(KernelContext);
+    check(cudaMalloc(&storage->data, total), "Allocate KernelContext storage");
+    check(cudaMemset(storage->data, 0, total), "Zero-initialize KernelContext storage");
 }
 
-__device__ __forceinline__ void save_ctx(KernelContext *ctx, KernelContextStorage *storage)
+__host__ void free_kernel_contexts(KernelContextStorage *storage)
 {
-    KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
-    row[threadIdx.x] = ctx;
+    if (storage->data != nullptr) {
+        cudaFree(storage->data);
+        storage->data = nullptr;
+    }
+}
+
+__device__ __forceinline__ KernelContext *get_ctx(KernelContextStorage *storage)
+{
+    return &storage->data[get_thread_id()];
 }
 
 __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage storage)
@@ -126,10 +134,8 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     RuntimeStatistics *st = data->get_statistics_ptr();
 
     st->signal_create_structures_start();
-    KernelContext *ctx = new KernelContext(data);
+    KernelContext *ctx = new (&storage.data[index]) KernelContext(data);
     st->signal_create_structures_stop();
-
-    save_ctx(ctx, &storage);
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
         printf("sizeof(KernelContext)=0x%zx\n", sizeof(KernelContext));

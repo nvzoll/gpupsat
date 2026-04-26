@@ -246,10 +246,8 @@ int main(int argc, char *argv[])
         );
         memcpy(data_host_ptr, &data, sizeof(data));
 
-        KernelContextStorage thread_contexts;
-
-        check(cudaMallocPitch(&thread_contexts.data, &thread_contexts.pitch, n_threads * sizeof(void *), n_blocks),
-            "Allocate thread contexts");
+        KernelContextStorage thread_contexts{};
+        allocate_kernel_contexts(&thread_contexts, n_blocks, n_threads);
 
         printf("About to invoke kernel...\n");
 

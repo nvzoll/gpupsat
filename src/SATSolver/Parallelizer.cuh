@@ -11,10 +11,16 @@
 #include "Utils/CUDAClauseVec.cuh"
 #include "Utils/GPUStaticVec.cuh"
 
+struct KernelContext;
+
+// Flat array of inline-stored KernelContexts. Allocated by allocate_kernel_contexts; constructed
+// in-place by parallel_kernel_init.
 struct KernelContextStorage {
-    void **data;
-    size_t pitch;
+    KernelContext *data;
 };
+
+__host__ void allocate_kernel_contexts(KernelContextStorage *storage, int n_blocks, int n_threads);
+__host__ void free_kernel_contexts(KernelContextStorage *storage);
 
 __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage);
 __global__ void parallel_kernel(KernelContextStorage, int *state);
