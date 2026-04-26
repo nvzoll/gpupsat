@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     *state_host_ptr = INT_MAX;
 
     check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT), "Set stack limit");
-    check(cudaThreadSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
+    check(cudaDeviceSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
 
     float elapsedTime = 0.;
     CudaStopwatch stopwatch;
