@@ -1,0 +1,11 @@
+c unsat_3v_complete — 3 vars, 8 clauses, UNSAT
+c every truth assignment is excluded by exactly one clause
+p cnf 3 8
+1 2 3 0
+1 2 -3 0
+1 -2 3 0
+1 -2 -3 0
+-1 2 3 0
+-1 2 -3 0
+-1 -2 3 0
+-1 -2 -3 0

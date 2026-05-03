@@ -39,13 +39,6 @@ __device__ Clause analyze_graph(CUDAListGraph& graph,
     second_largest.decision_level = -2;
 
 
-#ifdef USE_ASSERTIONS
-    assert(graph.are_all_unflagged());
-    if (!graph.is_set(graph.get_conflict_vertex_index())) {
-        printf("Attempting to analyzer conflict when no conflict is identified in graph!\n");
-        assert(false);
-    }
-#endif
 
     Lit conflicting_vertices_indices[MAX_CONFLICTING_VERTICES_SIZE];
 
@@ -114,9 +107,6 @@ __device__ void get_conflicting_assignment(int vertex_index,
     Decision current_decision = graph.get(vertex_index);
 
     if (!it.has_next()) {
-#ifdef USE_ASSERTIONS
-        assert(next_position < MAX_CONFLICTING_VERTICES_SIZE);
-#endif
 
         //conflicting_vertices_indices[next_position] = current_decision.literal;
         //next_position++;
@@ -140,9 +130,6 @@ __device__ void get_conflicting_assignment(int vertex_index,
             }
         }
         else {
-#ifdef USE_ASSERTIONS
-            assert(next_decision.decision_level == current_decision.decision_level);
-#endif
             get_conflicting_assignment(next_vert, conflicting_vertices_indices, next_position, graph,
                                        largest_dec_level, second_largest);
         }

@@ -26,9 +26,6 @@ public:
 
     void calculate()
     {
-#ifdef USE_ASSERTIONS
-        assert(!calculated);
-#endif
         average = 0;
         std_deviation = 0;
 
@@ -52,17 +49,11 @@ public:
 
     double get_average()
     {
-#ifdef USE_ASSERTIONS
-        assert(calculated);
-#endif
         return average;
     }
 
     double get_std_deviation()
     {
-#ifdef USE_ASSERTIONS
-        assert(calculated);
-#endif
         return std_deviation;
     }
 

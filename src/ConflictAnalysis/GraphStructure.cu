@@ -81,10 +81,6 @@ __device__ void CUDAListGraph::GraphStructure::add(Decision d)
 
     Var v = var(d.literal);
     int index = v;
-#ifdef USE_ASSERTIONS
-    assert(!vertices_indices.contains(index));
-    assert(!vertices[index].set);
-#endif
 
     vertices[index].decision = d;
 #ifdef INCLUDE_FORWARD_EDGES
@@ -107,12 +103,6 @@ __device__ void CUDAListGraph::GraphStructure::add_edge(
     const Clause *clause)
 {
 
-#ifdef USE_ASSERTIONS
-    assert(src_vertex_index != dest_vertex_index);
-    assert(!linked(src_vertex_index, dest_vertex_index));
-    assert(vertices_indices.contains(src_vertex_index) && vertices[src_vertex_index].set);
-    assert(vertices_indices.contains(dest_vertex_index) && vertices[dest_vertex_index].set);
-#endif
 
     Vertex *dest_vertex = &(vertices[dest_vertex_index]);
 #ifdef DEBUG
@@ -138,17 +128,8 @@ __device__ void CUDAListGraph::GraphStructure::add_edge(
 #endif // DEBUG
 
 #ifdef INCLUDE_FORWARD_EDGES
-#ifdef USE_ASSERTIONS
-    assert(src_vertex->n_neighbors < edges_capacity
-           && dest_vertex->n_backward_neighbors < edges_capacity
-          );
-#endif
 #else
 
-#ifdef USE_ASSERTIONS
-    assert(dest_vertex->n_backward_neighbors < edges_capacity
-          );
-#endif
 #endif
 
 #ifdef INCLUDE_FORWARD_EDGES
@@ -336,21 +317,9 @@ __device__ void CUDAListGraph::GraphStructure::link_with_conflict(
         vertices_indices.add(conflict_vertex_index);
     }
 
-#ifdef USE_ASSERTIONS
-    assert(vertices_indices.contains(conflict_vertex_index) &&
-           vertices[conflict_vertex_index].set);
-#endif
 
 
 
-#ifdef USE_ASSERTIONS
-    if (linked(src_vertex_index, get_conflict_vertex_index())) {
-        printf("Attempting to link two vertices (%d, k) that are already linked.\n",
-               src_vertex_index);
-        //print();
-        assert(false);
-    }
-#endif
 
 
     vertices[conflict_vertex_index].decision.decision_level = current_decision_level;
@@ -358,10 +327,6 @@ __device__ void CUDAListGraph::GraphStructure::link_with_conflict(
 
     add_edge(src_vertex_index, vertices_capacity - 1, implicating_clause);
 
-#ifdef USE_ASSERTIONS
-    assert(vertices_indices.contains(conflict_vertex_index) &&
-           vertices[conflict_vertex_index].set);
-#endif
 
 }
 

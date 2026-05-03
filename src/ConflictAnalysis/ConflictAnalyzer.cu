@@ -182,12 +182,6 @@ __device__ sat_status ConflictAnalyzer::propagate_all_clauses(Decision d,
 
         for (int i = 0; i < formula->size_of(); i++) {
             const Clause *c = formula->get_ptr(i);
-#ifdef USE_ASSERTIONS
-            if (c->n_lits == 0) {
-                printf("A formula clause is empty!\n");
-                assert(false);
-            }
-#endif
             bool impl_formula = vars_handler->should_implicate_from_formula(*c, d.literal);
             sat_status status = clause_status(c, impl_formula);
 
@@ -224,12 +218,6 @@ __device__ sat_status ConflictAnalyzer::propagate_all_clauses(Decision d,
 
     while (iterator.has_next()) {
         Clause *c = iterator.get_next_ptr();
-#ifdef USE_ASSERTIONS
-        if (c->n_lits == 0) {
-            printf("A learnt clause is empty!\n");
-            assert(false);
-        }
-#endif
 
         bool impl_formula = vars_handler->should_implicate_from_formula(*c, d.literal);
         sat_status status = clause_status(c, impl_formula);
@@ -281,14 +269,6 @@ __device__ sat_status ConflictAnalyzer::propagate(Decision d)
         //learnt_clauses_manager.print_learnt_clauses_repository();
         //return sat_status::UNSAT;
 
-#ifdef USE_ASSERTIONS
-        assert(next.decision_level > -1 || next.decision_level == NULL_DECISION_LEVEL);
-        assert(graph.check_consistency());
-        if (!vars_handler->check_consistency()) {
-            vars_handler->print_all();
-            assert(false);
-        }
-#endif
 
 
         if (status_confl != sat_status::UNDEF) {
@@ -385,16 +365,6 @@ __device__ sat_status ConflictAnalyzer::set_assumptions(
             sat_status assumptions_status = vars_handler->literal_status(lit_assumption, false);
 
             if (assumptions_status != sat_status::UNDEF) {
-#ifdef USE_ASSERTIONS
-                if (!graph.contains(var(lit_assumption))) {
-                    printf("Assumptions ");
-                    print_lit(lit_assumption);
-                    printf(" is not sat_status::UNDEF, but it is not in the implication graph.\n");
-                    vars_handler->print_all();
-
-                    assert(false);
-                }
-#endif
                 if (assumptions_status == sat_status::UNSAT) {
                     return sat_status::UNSAT;
                 }
@@ -414,9 +384,6 @@ __device__ sat_status ConflictAnalyzer::set_assumptions(
     dummy_dec.implicated_from_formula = false;
     sat_status status = ConflictAnalyzer::propagate_all_clauses(dummy_dec, &dummy);
 
-#ifdef USE_ASSERTIONS
-    assert(vars_handler->check_consistency());
-#endif
 
     return status;
     //return sat_status::UNDEF;
@@ -433,15 +400,6 @@ __device__ void ConflictAnalyzer::reset()
 __device__ void ConflictAnalyzer::add_decision_to_graph(Decision decision)
 {
 
-#ifdef USE_ASSERTIONS
-    if (graph.contains(var(decision.literal))) {
-        printf("Attempting to add ");
-        print_decision(decision);
-        printf(" to graph, which already contains the var.\n");
-        print_graph();
-        assert(false);
-    }
-#endif
 
     graph.set(decision);
 }
@@ -450,30 +408,14 @@ __device__ void ConflictAnalyzer::add_implication(Decision implication,
         const Clause *clause)
 {
     if (use_implication_graph) {
-#ifdef USE_ASSERTIONS
-        assert(!graph.contains(var(implication.literal)));
-        bool assert_lit_in_clause = false;
-#endif
         graph.set(implication);
 
         for (int i = 0; i < clause->n_lits; i++) {
             if (clause->literals[i] != implication.literal) {
-#ifdef USE_ASSERTIONS
-                assert(var(clause->literals[i]) != var(implication.literal));
-#endif
                 graph.link(var(clause->literals[i]), var(implication.literal), clause);
             }
-#ifdef USE_ASSERTIONS
-            else {
-                assert_lit_in_clause = true;
-            }
-#endif
         }
 
-#ifdef USE_ASSERTIONS
-        // The clause MUST contain the learnt literal.
-        assert(assert_lit_in_clause);
-#endif
     }
 
     vars_handler->new_implication(implication);
@@ -498,7 +440,7 @@ __device__ bool ConflictAnalyzer::check_solver_consistency()
     for (int i = 0; i < vars_handler->n_decisions(); i++) {
         if (vars_handler->get_decision(i).decision_level < 0
             || vars_handler->get_decision(i).decision_level > vars_handler->get_decision_level()) {
-            printf("Decision level (%d) of decision ");
+            printf("Decision level (%d) of decision ", vars_handler->get_decision(i).decision_level);
             print_lit(vars_handler->get_decision(i).literal);
             printf(" is invalid!\n");
             return false;
@@ -513,7 +455,7 @@ __device__ bool ConflictAnalyzer::check_solver_consistency()
     for (int i = 0; i < vars_handler->n_implications(); i++) {
         if (vars_handler->get_implication(i)->decision_level < 0
             || vars_handler->get_implication(i)->decision_level > vars_handler->get_decision_level()) {
-            printf("Decision level (%d) of implication ");
+            printf("Decision level (%d) of implication ", vars_handler->get_implication(i)->decision_level);
             print_lit(vars_handler->get_implication(i)->literal);
             printf(" is invalid!\n");
             return false;
@@ -559,30 +501,12 @@ __device__ void ConflictAnalyzer::unmake_implication(Decision implication)
 __device__ void ConflictAnalyzer::add_conflict_to_graph(const Clause *conflicting_clause)
 {
 
-#ifdef USE_ASSERTIONS
-    assert(!graph.contains(graph.get_conflict_vertex_index()));
-    if (!(conflicting_clause->n_lits > 0)) {
-        printf("An empty conflicting clause was used.\n");
-        formula->print_all();
-        assert(false);
-    }
-#endif
 
     for (int i = 0; i < conflicting_clause->n_lits; i++) {
         graph.link_with_conflict(var(conflicting_clause->literals[i]),
                                  conflicting_clause, vars_handler->get_decision_level());
     }
 
-#ifdef USE_ASSERTIONS
-    int conflict_vertex_index = graph.get_conflict_vertex_index();
-    if (!graph.is_set(conflict_vertex_index)) {
-        printf("Just added conflict to graph (vertex %d), "
-               "but conflict vertex is not set!\n",
-               conflict_vertex_index);
-        graph.print_vertex(conflict_vertex_index);
-        assert(false);
-    }
-#endif
 
 }
 
@@ -590,20 +514,6 @@ __device__ Clause ConflictAnalyzer::learn_clause(Decision& next_dec_level, Decis
 {
     Clause clause = analyze_graph(graph, next_dec_level, highest);
 
-#ifdef USE_ASSERTIONS
-    for (int i = 0; i < clause.n_lits; i++) {
-        if (vars_handler->literal_status(clause.literals[i]) == sat_status::UNDEF) {
-            printf("Learnt clause ");
-            print_clause(clause);
-            printf(" should have all its literals set, but literal ");
-            print_lit(clause.literals[i]);
-            printf(" is free.\n");
-            vars_handler->print_all();
-            assert(false);
-        }
-    }
-
-#endif
 
     return clause;
 }

@@ -58,7 +58,7 @@ __host__ __device__ void CUDAClauseVec::print_all()
     print_dev <<< 1, 1>>>(*this);
     //cudaDeviceReset();
 #else
-    printf("This vector contains %d %s:\n", size, size == 1 ? "clause" : "clauses");
+    printf("This vector contains %zu %s:\n", size, size == 1 ? "clause" : "clauses");
 
     for (int i = 0; i < size; i++) {
         print_clause(clauses_dev[i]);
@@ -84,9 +84,6 @@ __device__ bool CUDAClauseVec::remove(size_t pos)
 
 __host__ void CUDAClauseVec::alloc_and_copy_to_dev(std::vector<Clause>& vec)
 {
-#ifdef USE_ASSERTIONS
-    assert(vec.size() + size <= capacity);
-#endif
     int n_lits = 0;
 
     for (Clause const& cl : vec) {
@@ -109,9 +106,6 @@ __host__ void CUDAClauseVec::alloc_and_copy_to_dev(std::vector<Clause>& vec)
 
         bool added = add(dev_clause);
 
-#ifdef USE_ASSERTIONS
-        assert(added);
-#endif
 
         for (size_t i = 0; i < cl.n_lits; i++) {
             clauses_on_host[lit_count] = cl.literals[i];

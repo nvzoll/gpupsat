@@ -1,0 +1,9 @@
+c unsat_5v_chain — 5 vars, 6 clauses, UNSAT
+c x1 forced T, chain forces x5=T, but final clause demands ~x5
+p cnf 5 6
+1 0
+-1 2 0
+-2 3 0
+-3 4 0
+-4 5 0
+-5 0

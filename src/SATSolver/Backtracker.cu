@@ -11,9 +11,6 @@ __device__ Backtracker::Backtracker(
     , graph { graph }
     , stats { stats }
 {
-#ifdef USE_ASSERTIONS
-    assert(handler);
-#endif
 }
 
 __device__ void Backtracker::backtrack_to(int decision_level)

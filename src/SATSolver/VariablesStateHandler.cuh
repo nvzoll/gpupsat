@@ -20,9 +20,9 @@ private:
 
     DecisionMaker *decision_maker;
 
-    GPUVec<Var> free_vars;
-    GPUVec<Decision> decisions;
-    GPUVec<Decision> implications;
+    GPUVecView<Var> free_vars;
+    GPUVecView<Decision> decisions;
+    GPUVecView<Decision> implications;
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
     GPUVec<Lit> *assumptions;
 #else
@@ -34,7 +34,7 @@ private:
 
     __device__ void undo_decision(int index);
     __device__ void undo_implication(int index);
-    __device__ void undo_decision_or_implication(int index, GPUVec<Decision>& list);
+    __device__ void undo_decision_or_implication(int index, GPUVecView<Decision>& list);
     __device__ void free_var(Var v);
     __device__ void block_var(Var v);
 
@@ -43,8 +43,11 @@ public:
 
 
     __device__ VariablesStateHandler(int n_vars,
-                                     const GPUVec<Var> *dead_vars,
-                                     DecisionMaker *dec_maker);
+                                     const GPUVecView<Var> *dead_vars,
+                                     DecisionMaker *dec_maker,
+                                     Var *free_vars_buf,
+                                     Decision *decisions_buf,
+                                     Decision *implications_buf);
 
     __device__ void set_assumptions(
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR

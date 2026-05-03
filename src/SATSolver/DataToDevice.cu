@@ -8,7 +8,7 @@ DataToDevice::DataToDevice(FormulaData data, int n_jobs, int n_blocks,
 {
 }
 */
-DataToDevice::DataToDevice(CUDAClauseVec const& clauses_database, GPUVec<Var> const& dead_vars,
+DataToDevice::DataToDevice(CUDAClauseVec const& clauses_database, GPUVecView<Var> const& dead_vars,
     RuntimeStatistics const& st, numbers const& n, atomics const& counters)
     : clauses_db(clauses_database)
     , statistics(st)
@@ -29,6 +29,13 @@ DataToDevice::DataToDevice(CUDAClauseVec const& clauses_database, GPUVec<Var> co
     , max_implication_per_var { n.max_implication_per_var }
 
 {
+    size_t per_thread_count = static_cast<size_t>(n.blocks) * n.threads * n.vars;
+    check(cudaMalloc(&free_vars_arena, per_thread_count * sizeof(Var)),
+        "Allocate free_vars arena");
+    check(cudaMalloc(&decisions_arena, per_thread_count * sizeof(Decision)),
+        "Allocate decisions arena");
+    check(cudaMalloc(&implications_arena, per_thread_count * sizeof(Decision)),
+        "Allocate implications arena");
     /*
     WatchedClause * all_watched_clauses;
 
@@ -104,9 +111,9 @@ __host__ __device__ int DataToDevice::get_n_vars() { return n_vars; }
 
 __host__ __device__ int DataToDevice::get_max_implication_per_var() { return max_implication_per_var; }
 
-__host__ __device__ GPUVec<Var> *DataToDevice::get_dead_vars_ptr() { return &dead_vars; }
+__host__ __device__ GPUVecView<Var> *DataToDevice::get_dead_vars_ptr() { return &dead_vars; }
 
-__host__ __device__ GPUVec<Var> DataToDevice::get_dead_vars() { return dead_vars; }
+__host__ __device__ GPUVecView<Var> DataToDevice::get_dead_vars() { return dead_vars; }
 
 __host__ __device__ RuntimeStatistics& DataToDevice::get_statistics() { return statistics; }
 
@@ -124,6 +131,19 @@ __host__ __device__ NodesRepository<GPULinkedList<WatchedClause *>::Node> *DataT
 }
 
 __host__ __device__ const CUDAClauseVec *DataToDevice::get_clauses_db_ptr() { return &clauses_db; }
+
+__host__ __device__ Var *DataToDevice::get_free_vars_buffer(int thread_id)
+{
+    return &free_vars_arena[static_cast<size_t>(thread_id) * n_vars];
+}
+__host__ __device__ Decision *DataToDevice::get_decisions_buffer(int thread_id)
+{
+    return &decisions_arena[static_cast<size_t>(thread_id) * n_vars];
+}
+__host__ __device__ Decision *DataToDevice::get_implications_buffer(int thread_id)
+{
+    return &implications_arena[static_cast<size_t>(thread_id) * n_vars];
+}
 
 /*
 __device__ GPUVec <WatchedClause> DataToDevice::get_watched_clauses(int thread_block_index)

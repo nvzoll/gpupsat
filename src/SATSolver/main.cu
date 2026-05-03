@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     }
 
     std::vector<Lit> const& solved_lits = fdata.get_solved_literals();
-    GPUVec<Var> dead_vars_dev(solved_lits.size());
+    GPUVecStorage<Var> dead_vars_dev(solved_lits.size());
     std::vector<Var> dead_vars_host;
 
     for (Lit lit : solved_lits) {
@@ -178,21 +178,18 @@ int main(int argc, char *argv[])
 
     Results *results;
 
-    int *state_host_ptr;
-    int *state_dev_ptr;
-    DataToDevice *data_host_ptr;
-    DataToDevice *data_dev_ptr;
+    int *state_ptr = nullptr;
+    DataToDevice *data_host_ptr = nullptr;
+    DataToDevice *data_dev_ptr = nullptr;
 
-    check(cudaHostAlloc(&state_host_ptr, sizeof(int), cudaHostAllocMapped), "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&state_dev_ptr, state_host_ptr, 0), "Retrieve state dev_ptr");
-
-    check(cudaHostAlloc(&data_host_ptr, (sizeof(DataToDevice) * n_blocks * n_threads), cudaHostAllocMapped),
-        "Alloc pinned memory");
-    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0), "Retrieve state dev_ptr");
-    *state_host_ptr = INT_MAX;
+    check(cudaMallocManaged(&state_ptr, sizeof(int)), "Alloc managed state");
+    check(cudaHostAlloc(&data_host_ptr, sizeof(DataToDevice) * n_blocks * n_threads, cudaHostAllocMapped),
+        "Alloc pinned DataToDevice");
+    check(cudaHostGetDevicePointer(&data_dev_ptr, data_host_ptr, 0), "Retrieve data dev_ptr");
+    *state_ptr = INT_MAX;
 
     check(cudaDeviceSetLimit(cudaLimitStackSize, DEVICE_THREAD_STACK_LIMIT), "Set stack limit");
-    check(cudaThreadSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
+    check(cudaDeviceSetLimit(cudaLimitMallocHeapSize, DEVICE_THREAD_HEAP_LIMIT), "Set heap limit");
 
     float elapsedTime = 0.;
     CudaStopwatch stopwatch;
@@ -203,15 +200,20 @@ int main(int argc, char *argv[])
         DataToDevice::numbers n = { n_vars, n_clauses, 0, 1, 1, max_implication_per_var };
 
         DataToDevice data(
-            formula, dead_vars_dev, RuntimeStatistics(n.blocks, n.threads, nullptr), n, DataToDevice::atomics());
+            formula, dead_vars_dev.view(), RuntimeStatistics(n.blocks, n.threads, nullptr), n, DataToDevice::atomics());
 
         data.prepare_sequencial();
 
+        Lit *res_buf = nullptr;
+        check(cudaMalloc(&res_buf, n_vars * sizeof(Lit)), "Allocate sequential results buffer");
+
         stopwatch.start();
-        run_sequential<<<1, 1>>>(data, state_dev_ptr);
+        run_sequential<<<1, 1>>>(data, state_ptr, res_buf);
         elapsedTime = stopwatch.stop();
 
         results = data.get_results_ptr();
+
+        cudaFree(res_buf);
     } else {
 #ifdef USE_SIMPLE_JOBS_GENERATION
         SimpleJobChooser chooser(n_vars, dead_vars_host);
@@ -237,7 +239,7 @@ int main(int argc, char *argv[])
 
         RuntimeStatistics stat(n.blocks, n.threads, atomics.completed_jobs);
 
-        DataToDevice data(formula, dead_vars_dev, stat, n, atomics);
+        DataToDevice data(formula, dead_vars_dev.view(), stat, n, atomics);
         data.prepare_parallel(*dynamic_cast<JobChooser *>(&chooser)
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
                                   ,
@@ -246,10 +248,8 @@ int main(int argc, char *argv[])
         );
         memcpy(data_host_ptr, &data, sizeof(data));
 
-        KernelContextStorage thread_contexts;
-
-        check(cudaMallocPitch(&thread_contexts.data, &thread_contexts.pitch, n_threads * sizeof(void *), n_blocks),
-            "Allocate thread contexts");
+        KernelContextStorage thread_contexts{};
+        allocate_kernel_contexts(&thread_contexts, n_blocks, n_threads);
 
         printf("About to invoke kernel...\n");
 
@@ -258,12 +258,12 @@ int main(int argc, char *argv[])
         size_t call = 1;
         while (true) {
             stopwatch.start();
-            parallel_kernel<<<n_blocks, n_threads>>>(thread_contexts, state_dev_ptr);
+            parallel_kernel<<<n_blocks, n_threads>>>(thread_contexts, state_ptr);
             elapsedTime += stopwatch.stop();
 
             call++;
 
-            if (*state_host_ptr != INT_MAX || call == SIZE_MAX) {
+            if (*state_ptr != INT_MAX || call == SIZE_MAX) {
                 break;
             }
         }
@@ -278,7 +278,11 @@ int main(int argc, char *argv[])
 
         DataToDevice *winner = data_host_ptr;
 
-        parallel_kernel_retrieve_results<<<n_blocks, n_threads>>>(*winner, thread_contexts);
+        Lit *res_buf = nullptr;
+        size_t res_buf_sz = static_cast<size_t>(n_blocks) * n_threads * n_vars * sizeof(Lit);
+        check(cudaMalloc(&res_buf, res_buf_sz), "Allocate parallel results buffer");
+
+        parallel_kernel_retrieve_results<<<n_blocks, n_threads>>>(*winner, thread_contexts, res_buf);
 
         results = winner->get_results_ptr();
 
@@ -296,6 +300,13 @@ int main(int argc, char *argv[])
 
         // winner->get_statistics().print_function_time_statistics();
 #endif // ENABLE_STATISTICS
+
+        cudaFree(res_buf);
+        
+        cudaFree(atomics.next_job);
+        cudaFree(atomics.completed_jobs);
+
+        free_kernel_contexts(&thread_contexts);
     }
 
     printf("Total time on GPU: %f ms\n", elapsedTime);
@@ -308,6 +319,9 @@ int main(int argc, char *argv[])
         std::snprintf(buf, sizeof(buf), "%s,%d,%d,%f\n", pm.get_input_file(), n_threads, n_blocks, elapsedTime);
         out << buf;
     }
+
+    cudaFree(state_ptr);
+    cudaFree(data_host_ptr);
 
     cudaDeviceReset();
 

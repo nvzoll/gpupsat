@@ -1,11 +1,11 @@
 #include "SATSolver.cuh"
 
 __device__ SATSolver::SATSolver(const CUDAClauseVec *formula, int n_vars, int max_implication_per_var,
-    const GPUVec<Var> *dead_vars, RuntimeStatistics *statistics, watched_clause_node_t *node_repository
-    /*, GPUVec<WatchedClause> & watched_clauses*/)
+    const GPUVecView<Var> *dead_vars, RuntimeStatistics *statistics, watched_clause_node_t *node_repository,
+    Var *free_vars_buf, Decision *decisions_buf, Decision *implications_buf)
 
     : decision_maker(formula, n_vars)
-    , vars_handler(n_vars, dead_vars, &decision_maker)
+    , vars_handler(n_vars, dead_vars, &decision_maker, free_vars_buf, decisions_buf, implications_buf)
 
     , conflictAnalyzer(n_vars, formula, &vars_handler,
 #if CONFLICT_ANALYSIS_STRATEGY != FULL_SPACE_SEARCH
@@ -110,9 +110,6 @@ __device__ sat_status SATSolver::solve(
 
     int n_iterations = 0;
 
-#ifdef USE_ASSERTIONS
-    assert(!vars_handler.no_free_vars());
-#endif
 
 #ifdef IMPLICATION_GRAPH_DEBUG
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {

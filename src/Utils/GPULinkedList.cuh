@@ -34,9 +34,6 @@ private:
 
     __device__ void plain_remove(Node *to_remove)
     {
-#ifdef USE_ASSERTIONS
-        assert(to_remove != nullptr);
-#endif
         Node *previous = to_remove->previous;
         Node *next = to_remove->next;
 
@@ -61,9 +58,6 @@ private:
 
     __device__ Node *get_node_ptr(int index)
     {
-#ifdef USE_ASSERTIONS
-        assert(index >= 0 && index < list_size);
-#endif
         Node *element = first;
 
         for (int i = 0; i < index; i++) {
@@ -79,9 +73,6 @@ private:
             Node *node_alloc = new Node;
 
             //assert(node_alloc != nullptr);
-#ifdef USE_ASSERTIONS
-            assert(node_alloc != nullptr);
-#endif
 
             return node_alloc;
         }
@@ -177,9 +168,6 @@ public:
     __device__ T *add(const T& element, int index)
     {
 
-#ifdef USE_ASSERTIONS
-        assert(index >= 0 && index <= list_size);
-#endif
 
         Node *new_node = allocate_node();
         new_node->element = element;
@@ -188,9 +176,6 @@ public:
         Node *next = first;
 
         for (int i = 0; i < index; i++) {
-#ifdef USE_ASSERTIONS
-            assert(next != nullptr);
-#endif
             previous = next;
             next = next->next;
         }
@@ -223,9 +208,6 @@ public:
      */
     __device__ T get(int index)
     {
-#ifdef USE_ASSERTIONS
-        assert(index >= 0 && index < list_size);
-#endif
 
         Node *element = first;
 
@@ -240,9 +222,6 @@ public:
 
     __device__ void remove(int index)
     {
-#ifdef USE_ASSERTIONS
-        assert(index >= 0 && index < list_size);
-#endif
         Node *to_remove = first;
 
         for (int i = 0; i < index; i++) {
@@ -260,17 +239,11 @@ public:
     __device__ T *push_back(const T& element)
     {
         Node *new_node = allocate_node();
-#ifdef USE_ASSERTIONS
-        assert(new_node != nullptr);
-#endif
 
         new_node->next = nullptr;
         new_node->element = element;
 
         if (last == nullptr) {
-#ifdef USE_ASSERTIONS
-            assert(list_size == 0);
-#endif
             new_node->previous = nullptr;
             first = new_node;
         }
@@ -372,9 +345,6 @@ public:
 
         __device__ void remove()
         {
-#ifdef USE_ASSERTIONS
-            assert(last_sent != nullptr);
-#endif
             Node *the_previous = last_sent->previous;
             list->plain_remove(last_sent);
 

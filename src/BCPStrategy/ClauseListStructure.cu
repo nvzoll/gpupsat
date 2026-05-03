@@ -27,9 +27,6 @@ __device__ WatchedClausesList::ClauseListStructure::ClauseListStructure(
 {
     watched_clauses_per_var = new GPULinkedList<WatchedClause *>[n_vars];
 
-#ifdef USE_ASSERTIONS
-    assert(watched_clauses_per_var != nullptr);
-#endif
 
     GPULinkedList<WatchedClause *> list(node_repository);
 
@@ -42,9 +39,6 @@ __device__ WatchedClausesList::ClauseListStructure::ClauseListStructure(
 
 __device__ void WatchedClausesList::ClauseListStructure::add_clause(WatchedClause *clause, Var var)
 {
-#ifdef USE_ASSERTIONS
-    assert(var < n_vars && var >= 0);
-#endif
 
     watched_clauses_per_var[var].add_first(clause);
 
@@ -73,9 +67,6 @@ __device__ WatchedClause *WatchedClausesList::ClauseListStructure::get_clause(Va
 
 __device__ int WatchedClausesList::ClauseListStructure::clauses_list_size(Var var)
 {
-#ifdef USE_ASSERTIONS
-    assert(var < n_vars && var >= 0);
-#endif
     return watched_clauses_per_var[var].size();
 }
 
@@ -86,22 +77,11 @@ __device__ void WatchedClausesList::ClauseListStructure::switch_watched_literal(
 {
     Var old_var = var(clause->clause.literals[old_watched_index]);
     Var new_var = var(clause->clause.literals[new_watched_index]);
-#ifdef USE_ASSERTIONS
-    assert(old_var >= 0 && old_var < n_vars &&
-           new_var >= 0 && new_var < n_vars );
-#endif
 
     if (clause->watched_lit_index_1 == old_watched_index) {
-#ifdef USE_ASSERTIONS
-        assert(clause->watched_lit_index_2 != new_watched_index);
-#endif
         clause->watched_lit_index_1 = new_watched_index;
     }
     else {
-#ifdef USE_ASSERTIONS
-        assert(clause->watched_lit_index_2 == old_watched_index &&
-               clause->watched_lit_index_1 != new_watched_index);
-#endif
         clause->watched_lit_index_2 = new_watched_index;
 
     }
@@ -115,13 +95,6 @@ __device__
 GPULinkedList<WatchedClause *>::LinkedListIterator
 WatchedClausesList::ClauseListStructure::get_iterator(Var var)
 {
-#ifdef USE_ASSERTIONS
-    if (!(var >= 0 && var < n_vars)) {
-        printf("Getting iterator for invalid var %d\n", var);
-        print_structure();
-        assert(false);
-    }
-#endif
     return watched_clauses_per_var[var].get_iterator();
 }
 
@@ -134,12 +107,6 @@ watch_clause(WatchedClause *watched_clause, bool test_consistency)
     get_two_literals_with_fewer_clauses(&watched_clause->clause,
                                         smallest, second_smallest, test_consistency);
 
-#ifdef USE_ASSERTIONS
-    assert(smallest != second_smallest && smallest >= 0 && second_smallest >= 0 &&
-           smallest < watched_clause->clause.n_lits &&
-           second_smallest < watched_clause->clause.n_lits
-          );
-#endif
 
     watched_clause->watched_lit_index_1 = smallest;
     watched_clause->watched_lit_index_2 = second_smallest;
@@ -178,31 +145,11 @@ get_two_literals_with_fewer_clauses(Clause *c, int& smallest, int& second_smalle
         }
     }
 
-#ifdef USE_ASSERTIONS
-    assert(smallest_value > -1 && second_smallest_value > -1 &&
-           smallest != second_smallest);
-#endif
 }
 
 __device__ void WatchedClausesList::ClauseListStructure::block_clause(WatchedClause *watched_clause)
 {
 
-#ifdef USE_ASSERTIONS
-    //if (blocked_clauses.contains(watched_clause))
-    //{
-    //printf("Watch clause:\n");
-    //print_watch_clause(*watched_clause);
-    //printf("\n");
-    //print_structure();
-    //assert(false);
-    //}
-
-    assert(!blocked_clauses.contains(watched_clause));
-    assert(watched_clause->watched_lit_index_1 >= 0 &&
-           watched_clause->watched_lit_index_1 < watched_clause->clause.n_lits);
-    assert(watched_clause->watched_lit_index_2 >= 0 &&
-           watched_clause->watched_lit_index_2 < watched_clause->clause.n_lits);
-#endif
 
     Var v1 = var(watched_clause->clause.literals[watched_clause->watched_lit_index_1]);
     Var v2 = var(watched_clause->clause.literals[watched_clause->watched_lit_index_2]);
@@ -213,27 +160,17 @@ __device__ void WatchedClausesList::ClauseListStructure::block_clause(WatchedCla
 
     blocked_clauses.add_first(watched_clause);
 
-#ifdef USE_ASSERTIONS
-    assert(!watched_clauses_per_var[v1].contains(watched_clause) &&
-           !watched_clauses_per_var[v2].contains(watched_clause));
-#endif
 
 }
 
 __device__ void WatchedClausesList::ClauseListStructure::
 unblock_clause(WatchedClause *watched_clause)
 {
-#ifdef USE_ASSERTIONS
-    assert(blocked_clauses.contains(watched_clause));
-#endif
 
     watch_clause(watched_clause, true);
 
     bool removed = blocked_clauses.remove_obj(watched_clause);
 
-#ifdef USE_ASSERTIONS
-    assert(removed);
-#endif
 }
 
 __device__ void WatchedClausesList::ClauseListStructure::unblock_all()
@@ -298,9 +235,6 @@ __device__ void WatchedClausesList::ClauseListStructure::purge_clause(Clause c)
         }
     }
 
-#ifdef USE_ASSERTIONS
-    assert(removed && other_var != -1);
-#endif
 
     auto iter = watched_clauses_per_var[other_var].get_iterator();
     while (iter.has_next()) {
@@ -311,9 +245,6 @@ __device__ void WatchedClausesList::ClauseListStructure::purge_clause(Clause c)
         }
     }
 
-#ifdef USE_ASSERTIONS
-    assert(false);
-#endif
 
 }
 
@@ -403,7 +334,7 @@ __device__ bool WatchedClausesList::ClauseListStructure::check_consistency()
     }
 
     if (((clauses_count / 2) + blocked_clauses.size()) != n_added_clauses) {
-        printf("By counting (removing duplicates), %d clauses were found,"
+        printf("By counting (removing duplicates), %zu clauses were found,"
                " while %d where added in the first place\n",
                (clauses_count / 2) + blocked_clauses.size(),
                n_added_clauses

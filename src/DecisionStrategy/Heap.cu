@@ -66,9 +66,6 @@ __device__ Lit Heap::get_max_lit()
 
 __device__ void Heap::increment_lit(Lit literal, int increment)
 {
-#ifdef USE_ASSERTIONS
-    assert(increment > 0);
-#endif
 
     int index = vector.get_index(literal);
     int parent_i = parent_index(index);

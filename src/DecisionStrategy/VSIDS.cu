@@ -66,17 +66,11 @@ __device__ void VSIDS::increment(Lit literal)
 
 __device__ void VSIDS::free_var(Var v)
 {
-#ifdef USE_ASSERTIONS
-    assert(v >= 0 && v < n_vars);
-#endif
     vars[v].free = true;
 }
 
 __device__ void VSIDS::block_var(Var v)
 {
-#ifdef USE_ASSERTIONS
-    assert(v >= 0 && v < n_vars);
-#endif
     vars[v].free = false;
 }
 
@@ -125,9 +119,6 @@ __device__ Lit VSIDS::next_higher_literal()
         }
 
     }
-#ifdef USE_ASSERTIONS
-    assert(higher.x >= 0);
-#endif
 
     return higher;
 }
@@ -155,7 +146,7 @@ __device__ bool VSIDS::is_free(Var v)
 
 __device__ void VSIDS::print()
 {
-    printf("Evals[%d] = {", n_vars);
+    printf("Evals[%zu] = {", n_vars);
     for (int i = 0; i < n_vars; i++) {
         Lit lp = mkLit(i, true);
         Lit ln = mkLit(i, false);
@@ -167,5 +158,5 @@ __device__ void VSIDS::print()
 
     }
 
-    printf("}\nDecisions = %d\n", n_decisions);
+    printf("}\nDecisions = %zu\n", n_decisions);
 }

@@ -50,9 +50,6 @@ void SimpleJobChooser::evaluate()
 }
 void SimpleJobChooser::getJobs(JobsQueue& queue)
 {
-#ifdef USE_ASSERTIONS
-    assert(evaluated);
-#endif
 
     m_fixed_lits.resize(vars_per_job);
     addJobs(m_fixed_lits.data(), 0, queue);

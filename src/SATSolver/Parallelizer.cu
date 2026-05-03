@@ -36,7 +36,10 @@ struct KernelContext {
 #endif
     , queue { data->get_jobs_queue_dptr() },
         solver(data->get_clauses_db_dptr(), data->get_n_vars(), data->get_max_implication_per_var(),
-            data->get_dead_vars_ptr(), st, data->get_nodes_repository_ptr()),
+            data->get_dead_vars_ptr(), st, data->get_nodes_repository_ptr(),
+            data->get_free_vars_buffer(get_thread_id()),
+            data->get_decisions_buffer(get_thread_id()),
+            data->get_implications_buffer(get_thread_id())),
         solved_jobs { 0 }, answer_ptr { data->get_found_answer_ptr() }
     // , watched_clauses { data.get_watched_clauses(index) }
     {
@@ -107,16 +110,24 @@ struct KernelContext {
     }
 };
 
-__device__ __forceinline__ KernelContext *get_ctx(KernelContextStorage *storage)
+__host__ void allocate_kernel_contexts(KernelContextStorage *storage, int n_blocks, int n_threads)
 {
-    KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
-    return row[threadIdx.x];
+    size_t total = static_cast<size_t>(n_blocks) * n_threads * sizeof(KernelContext);
+    check(cudaMalloc(&storage->data, total), "Allocate KernelContext storage");
+    check(cudaMemset(storage->data, 0, total), "Zero-initialize KernelContext storage");
 }
 
-__device__ __forceinline__ void save_ctx(KernelContext *ctx, KernelContextStorage *storage)
+__host__ void free_kernel_contexts(KernelContextStorage *storage)
 {
-    KernelContext **row = (KernelContext **)((char *)storage->data + blockIdx.x * storage->pitch);
-    row[threadIdx.x] = ctx;
+    if (storage->data != nullptr) {
+        cudaFree(storage->data);
+        storage->data = nullptr;
+    }
+}
+
+__device__ __forceinline__ KernelContext *get_ctx(KernelContextStorage *storage)
+{
+    return &storage->data[get_thread_id()];
 }
 
 __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage storage)
@@ -126,23 +137,21 @@ __global__ void parallel_kernel_init(DataToDevice *data, KernelContextStorage st
     RuntimeStatistics *st = data->get_statistics_ptr();
 
     st->signal_create_structures_start();
-    KernelContext *ctx = new KernelContext(data);
+    KernelContext *ctx = new (&storage.data[index]) KernelContext(data);
     st->signal_create_structures_stop();
 
-    save_ctx(ctx, &storage);
-
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
-        printf("sizeof(KernelContext)=0x%x\n", sizeof(KernelContext));
+        printf("sizeof(KernelContext)=0x%zx\n", sizeof(KernelContext));
     }
 
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
         printf("Block: %d, thread: %d, index: %d\n", blockIdx.x, threadIdx.x, index);
-        printf("Largest job is : %d\n", ctx->queue->largest_job_size());
-        printf("Number of literals: %d\n", ctx->job.n_literals);
+        printf("Largest job is : %zu\n", ctx->queue->largest_job_size());
+        printf("Number of literals: %zu\n", ctx->job.n_literals);
     }
 }
 
-__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage storage)
+__global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContextStorage storage, Lit *res_buf)
 {
     KernelContext *ctx = get_ctx(&storage);
     RuntimeStatistics *st = ctx->st;
@@ -151,13 +160,11 @@ __global__ void parallel_kernel_retrieve_results(DataToDevice data, KernelContex
 
     if (ctx->status == sat_status::SAT) {
         size_t results_size = ctx->solver.get_results_size();
-        Lit *content = new Lit[results_size];
+        Lit *content = &res_buf[get_thread_id() * data.get_n_vars()];
         ctx->solver.get_results(content);
 
         Results *results = data.get_results_ptr();
         results->set_satisfiable_results(content, results_size);
-
-        delete[] content;
     }
 
     if (ctx->status == sat_status::UNDEF) {
@@ -184,7 +191,7 @@ __global__ void parallel_kernel(KernelContextStorage storage, int *state)
     if (DEBUG_SHOULD_PRINT(threadIdx.x, blockIdx.x)) {
         printf("Thread of index %d is running job: ", index);
         print_job(ctx->job);
-        printf("Job has %d literals", ctx->job.n_literals);
+        printf("Job has %zu literals", ctx->job.n_literals);
         printf("\n");
     }
 
@@ -220,7 +227,7 @@ __global__ void parallel_kernel(KernelContextStorage storage, int *state)
     }
 }
 
-__global__ void run_sequential(DataToDevice data, int *state)
+__global__ void run_sequential(DataToDevice data, int *state, Lit *res_buf)
 {
     RuntimeStatistics *st = data.get_statistics_ptr();
     st->signal_create_structures_start();
@@ -236,20 +243,19 @@ __global__ void run_sequential(DataToDevice data, int *state)
 
     Results results = data.get_results();
 
-    // GPUVec <WatchedClause> watched_clauses = data.get_watched_clauses(0);
-
-    SATSolver *solver = new SATSolver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
-        st, data.get_nodes_repository_ptr()
-        //, watched_clauses
-    );
+    SATSolver solver(clauses_db, n_vars, data.get_max_implication_per_var(), data.get_dead_vars_ptr(),
+        st, data.get_nodes_repository_ptr(),
+        data.get_free_vars_buffer(0),
+        data.get_decisions_buffer(0),
+        data.get_implications_buffer(0));
 
     st->signal_create_structures_stop();
     st->signal_job_start();
 
 #ifdef ASSUMPTIONS_USE_DYNAMICALLY_ALLOCATED_VECTOR
-    sat_status status = solver->solve(&assumptions);
+    sat_status status = solver.solve(&assumptions);
 #else
-    sat_status status = solver->solve();
+    sat_status status = solver.solve();
 #endif
 
     st->signal_job_stop();
@@ -257,17 +263,9 @@ __global__ void run_sequential(DataToDevice data, int *state)
     st->signal_process_results_start();
 
     if (status == sat_status::SAT) {
-        int results_size = solver->get_results_size();
-        Lit *the_results = new Lit[results_size];
-        solver->get_results(the_results);
-
-        results.set_satisfiable_results(the_results, results_size);
-
-        delete[] the_results;
-    }
-
-    if (status == sat_status::UNSAT) {
-        // do nothing!
+        int results_size = solver.get_results_size();
+        solver.get_results(res_buf);
+        results.set_satisfiable_results(res_buf, results_size);
     }
 
     if (status == sat_status::UNDEF) {
@@ -277,6 +275,4 @@ __global__ void run_sequential(DataToDevice data, int *state)
     st->signal_process_results_stop();
 
     *state = get_thread_id();
-
-    delete solver;
 }
