@@ -1,6 +1,8 @@
 # GPUPSAT: CUDA-Accelerated SAT Solver
 
-GPUPSAT is a CUDA-accelerated Boolean Satisfiability (SAT) solver that leverages GPU parallelism to solve SAT problems efficiently. It implements a parallel DPLL algorithm with modern SAT solving techniques.
+GPUPSAT is a CUDA-accelerated Boolean Satisfiability (SAT) solver that leverages GPU parallelism to solve SAT problems. It implements a parallel DPLL algorithm with modern SAT solving techniques.
+
+**Upd: You can find new, less janky implementation here: https://github.com/nvzoll/gpupsat2**
 
 ## Features
 
